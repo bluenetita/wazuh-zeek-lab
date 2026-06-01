@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable promisc mode on vlan interface
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set ens19.999 up
+ExecStart=/sbin/ip link set ens19.999 promisc on
+
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

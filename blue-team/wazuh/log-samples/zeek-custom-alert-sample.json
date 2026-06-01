@@ -1,0 +1,31 @@
+{
+  "timestamp": "TIMESTAMP",
+  "rule": {
+    "level": 5,
+    "description": "Zeek: file payload.sh possible malware, source ip VICTIM_IP, destination ip ATTACKER_IP, destination port 8000, mime type application/x-sh, total bytes 2048, sha1 HASH_REDACTED, sha256 HASH_REDACTED, note suspicious payload download.",
+    "id": "100909",
+    "groups": [
+      "zeek_custom",
+      "malware",
+      "reverse_shell_stage"
+    ]
+  },
+  "agent": {
+    "id": "AGENT_ID",
+    "name": "ZeekVM",
+    "ip": "ZEEK_IP"
+  },
+  "data": {
+    "event_type": "possible_malware",
+    "source_ip": "VICTIM_IP",
+    "destination_ip": "ATTACKER_IP",
+    "destination_port": "8000",
+    "file_name": "payload.sh",
+    "mime_type": "application/x-sh",
+    "total_bytes": "2048",
+    "sha1": "HASH_REDACTED",
+    "sha256": "HASH_REDACTED",
+    "note": "suspicious_payload_download"
+  },
+  "location": "/var/log/zeek-custom/possible_malware.log"
+}

@@ -1,0 +1,299 @@
+# ============================================================
+# General OS / editor files
+# ============================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.swp
+*.swo
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+
+.vscode/
+.idea/
+*.code-workspace
+
+
+# ============================================================
+# Secrets / credentials / keys
+# ============================================================
+
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+*.der
+
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+known_hosts
+authorized_keys
+
+.env
+.env.*
+*.env
+
+secrets/
+credentials/
+private/
+keys/
+
+authd.pass
+client.keys
+*.passwd
+*.password
+*.secret
+*.token
+
+
+# ============================================================
+# Logs
+# ============================================================
+
+*.log
+*.log.*
+*.gz
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+logs/
+log/
+tmp/
+temp/
+
+# Keep README files inside log sample directories
+!**/logs-samples/README.md
+!**/log-samples/README.md
+!**/evidence/**/README.md
+
+
+# ============================================================
+# Zeek runtime files and logs
+# ============================================================
+
+/opt/zeek/logs/
+/var/log/zeek/
+/var/log/zeek-custom/
+
+*.pcap
+*.pcapng
+*.cap
+
+conn.log
+dns.log
+http.log
+ssl.log
+tls.log
+notice.log
+weird.log
+files.log
+software.log
+x509.log
+
+possible_malware.log
+reverse_shell_live.log
+reverse_shell_movement.log
+reverse_shell_final.log
+
+# Allow sanitized/sample Zeek evidence if explicitly named as sample
+!**/*sample*.log
+!**/*sample*.json
+!**/*sanitized*.log
+!**/*sanitized*.json
+
+
+# ============================================================
+# Wazuh runtime files and logs
+# ============================================================
+
+/var/ossec/logs/
+/var/ossec/queue/
+/var/ossec/var/
+/var/ossec/tmp/
+/var/ossec/stats/
+/var/ossec/backup/
+
+alerts.log
+alerts.json
+ossec.log
+archives.log
+archives.json
+
+# Allow Wazuh config, decoders and rules
+!blue-team/wazuh/**/*.xml
+!blue-team/wazuh/**/*.conf
+!blue-team/wazuh/**/*.md
+
+# Allow sanitized evidence samples
+!evidence/**/*sample*.json
+!evidence/**/*sanitized*.json
+!evidence/**/README.md
+
+
+# ============================================================
+# pfSense / RouterOS sensitive exports and backups
+# ============================================================
+
+config.xml
+config-*.xml
+*.backup.xml
+
+*.rsc.backup
+*.rsc.old
+
+# Allow explicitly sanitized/example configs
+!network/pfsense/config/config-sanitized.xml
+!network/pfsense/config/config-example.xml
+!network/routeros/config/routeros-config-example.rsc
+
+
+# ============================================================
+# Proxmox backups, VM disks, ISO, snapshots
+# ============================================================
+
+*.vma
+*.vma.gz
+*.vma.zst
+*.vzdump
+vzdump-*
+dump/
+
+*.qcow2
+*.raw
+*.vmdk
+*.vdi
+*.img
+*.iso
+
+*.lzo
+*.zst
+
+snapshots/
+backup/
+backups/
+
+
+# ============================================================
+# Database dumps / exports
+# ============================================================
+
+*.sql.gz
+*.dump
+*.backup
+*.db
+*.sqlite
+*.sqlite3
+
+dump.sql
+database.sql
+backup.sql
+
+# Allow sanitized SQL schema examples
+!infrastructure/server-db/sql/schema-example.sql
+!infrastructure/server-db/sql/README.md
+
+
+# ============================================================
+# Evidence safety
+# ============================================================
+
+# Block large/raw evidence by default
+evidence/**/*.pcap
+evidence/**/*.pcapng
+evidence/**/*.cap
+evidence/**/*.log
+evidence/**/*.gz
+evidence/**/*.zip
+evidence/**/*.tar
+evidence/**/*.tar.gz
+
+# Allow small sanitized/sample evidence files
+!evidence/**/*sample*.txt
+!evidence/**/*sample*.json
+!evidence/**/*sample*.log
+!evidence/**/*sanitized*.txt
+!evidence/**/*sanitized*.json
+!evidence/**/*sanitized*.log
+!evidence/**/README.md
+!evidence/**/notes.md
+
+
+# ============================================================
+# Payloads / offensive artifacts
+# ============================================================
+
+payloads/
+exploits/
+malware/
+shells/
+reverse-shells/
+wordlists/
+
+*.elf
+*.exe
+*.dll
+*.bin
+*.sh.bin
+*.payload
+*.msf
+
+
+# ============================================================
+# Python / local tooling
+# ============================================================
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
+venv/
+env/
+
+.pytest_cache/
+.mypy_cache/
+
+
+# ============================================================
+# Node / frontend tooling, if ever used
+# ============================================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# ============================================================
+# Keep documentation and safe config files
+# ============================================================
+
+!README.md
+!**/README.md
+!**/*.md
+!**/*.example
+!**/*.example.*
+!**/*example*
+!**/*sanitized*
+!**/*.service
+!**/*.sh
+!**/*.conf
+!**/*.xml
+!**/*.rsc
+!**/*.yaml
+!**/*.yml

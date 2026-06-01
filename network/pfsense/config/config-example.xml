@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<pfsense>
+  <version>23.3</version>
+
+  <system>
+    <hostname>pfSense</hostname>
+    <domain>LAB_DOMAIN</domain>
+
+    <user>
+      <name>admin</name>
+      <descr><![CDATA[System Administrator]]></descr>
+      <scope>system</scope>
+      <groupname>admins</groupname>
+      <bcrypt-hash>REDACTED</bcrypt-hash>
+      <uid>0</uid>
+      <priv>user-shell-access</priv>
+    </user>
+
+    <webgui>
+      <protocol>https</protocol>
+      <ssl-certref>REDACTED</ssl-certref>
+    </webgui>
+
+    <ssh>
+      <enable>enabled</enable>
+    </ssh>
+
+    <dnsserver>DNS_SERVER_1</dnsserver>
+    <dnsserver>DNS_SERVER_2</dnsserver>
+    <timezone>Etc/UTC</timezone>
+  </system>
+
+  <interfaces>
+    <wan>
+      <enable></enable>
+      <if>WAN_INTERFACE</if>
+      <ipaddr>PFSENSE_WAN_IP</ipaddr>
+      <subnet>WAN_SUBNET_BITS</subnet>
+      <gateway>WAN_GATEWAY_NAME</gateway>
+      <blockpriv></blockpriv>
+      <blockbogons></blockbogons>
+    </wan>
+
+    <lan>
+      <enable></enable>
+      <if>LAN_INTERFACE</if>
+      <ipaddr>PFSENSE_LAN_IP</ipaddr>
+      <subnet>LAN_SUBNET_BITS</subnet>
+      <gateway></gateway>
+    </lan>
+  </interfaces>
+
+  <nat>
+    <outbound>
+      <mode>automatic</mode>
+    </outbound>
+  </nat>
+
+  <filter>
+    <rule>
+      <type>pass</type>
+      <ipprotocol>inet</ipprotocol>
+      <descr><![CDATA[Allow internal network to external network]]></descr>
+      <interface>lan</interface>
+      <source>
+        <network>lan</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+    </rule>
+
+    <rule>
+      <type>block</type>
+      <ipprotocol>inet</ipprotocol>
+      <descr><![CDATA[Block unsolicited external traffic]]></descr>
+      <interface>wan</interface>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <network>lan</network>
+      </destination>
+    </rule>
+
+    <rule>
+      <type>pass</type>
+      <ipprotocol>inet</ipprotocol>
+      <descr><![CDATA[Example controlled lab scenario rule]]></descr>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <address>ATTACKER_IP</address>
+      </source>
+      <destination>
+        <address>VICTIM_IP</address>
+        <port>SCENARIO_PORT</port>
+      </destination>
+    </rule>
+  </filter>
+
+  <gateways>
+    <gateway_item>
+      <interface>wan</interface>
+      <gateway>WAN_GATEWAY_IP</gateway>
+      <name>WAN_GATEWAY_NAME</name>
+      <weight>1</weight>
+      <ipprotocol>inet</ipprotocol>
+      <descr><![CDATA[WAN gateway example]]></descr>
+    </gateway_item>
+
+    <defaultgw4>WAN_GATEWAY_NAME</defaultgw4>
+  </gateways>
+
+  <openvpn></openvpn>
+  <ipsec></ipsec>
+
+  <cert>
+    <refid>REDACTED</refid>
+    <descr><![CDATA[Example sanitized certificate entry]]></descr>
+    <type>server</type>
+    <crt>REDACTED</crt>
+    <prv>REDACTED</prv>
+  </cert>
+</pfsense>

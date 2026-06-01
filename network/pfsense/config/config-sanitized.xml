@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+
+<pfsense>
+  <version>23.3</version>
+  <lastchange></lastchange>
+
+  <system>
+    <optimization>normal</optimization>
+    <hostname>pfSense</hostname>
+    <domain>home.arpa</domain>
+    <dnsallowoverride>on</dnsallowoverride>
+
+```
+<group>
+  <name>all</name>
+  <description><![CDATA[All Users]]></description>
+  <scope>system</scope>
+  <gid>1998</gid>
+  <member>0</member>
+</group>
+
+<group>
+  <name>admins</name>
+  <description><![CDATA[System Administrators]]></description>
+  <scope>system</scope>
+  <gid>1999</gid>
+  <member>0</member>
+  <priv>page-all</priv>
+</group>
+
+<user>
+  <name>admin</name>
+  <descr><![CDATA[System Administrator]]></descr>
+  <scope>system</scope>
+  <groupname>admins</groupname>
+  <bcrypt-hash>REDACTED</bcrypt-hash>
+  <uid>0</uid>
+  <priv>user-shell-access</priv>
+</user>
+
+<nextuid>2000</nextuid>
+<nextgid>2000</nextgid>
+<timeservers>2.pfsense.pool.ntp.org</timeservers>
+
+<webgui>
+  <protocol>https</protocol>
+  <loginautocomplete></loginautocomplete>
+  <ssl-certref>REDACTED</ssl-certref>
+</webgui>
+
+<disablenatreflection>yes</disablenatreflection>
+<disablesegmentationoffloading></disablesegmentationoffloading>
+<disablelargereceiveoffloading></disablelargereceiveoffloading>
+<ipv6allow></ipv6allow>
+<maximumtableentries>400000</maximumtableentries>
+<powerd_ac_mode>hadp</powerd_ac_mode>
+<powerd_battery_mode>hadp</powerd_battery_mode>
+<powerd_normal_mode>hadp</powerd_normal_mode>
+
+<bogons>
+  <interval>monthly</interval>
+</bogons>
+
+<hn_altq_enable></hn_altq_enable>
+<already_run_config_upgrade></already_run_config_upgrade>
+
+<ssh>
+  <enable>enabled</enable>
+</ssh>
+
+<dnsserver>1.1.1.1</dnsserver>
+<dnsserver>8.8.8.8</dnsserver>
+<timezone>Etc/UTC</timezone>
+```
+
+  </system>
+
+  <interfaces>
+    <wan>
+      <enable></enable>
+      <if>vtnet0</if>
+      <mtu></mtu>
+      <ipaddr>10.2.0.254</ipaddr>
+      <ipaddrv6></ipaddrv6>
+      <subnet>24</subnet>
+      <gateway>WANGW_2</gateway>
+      <blockpriv></blockpriv>
+      <blockbogons></blockbogons>
+      <dhcphostname></dhcphostname>
+      <media></media>
+      <mediaopt></mediaopt>
+      <dhcp6-duid></dhcp6-duid>
+      <dhcp6-ia-pd-len>0</dhcp6-ia-pd-len>
+      <subnetv6></subnetv6>
+      <gatewayv6></gatewayv6>
+    </wan>
+
+```
+<lan>
+  <enable></enable>
+  <if>vtnet1</if>
+  <ipaddr>10.4.0.253</ipaddr>
+  <subnet>24</subnet>
+  <ipaddrv6></ipaddrv6>
+  <subnetv6></subnetv6>
+  <media></media>
+  <mediaopt></mediaopt>
+  <track6-interface>wan</track6-interface>
+  <track6-prefix-id>0</track6-prefix-id>
+  <gateway></gateway>
+  <gatewayv6></gatewayv6>
+</lan>
+```
+
+  </interfaces>
+
+<staticroutes></staticroutes>
+
+  <dhcpd>
+    <lan>
+      <range>
+        <from>192.168.1.100</from>
+        <to>192.168.1.199</to>
+      </range>
+    </lan>
+  </dhcpd>
+
+  <dhcpdv6>
+    <lan>
+      <range>
+        <from>::1000</from>
+        <to>::2000</to>
+      </range>
+      <ramode>disabled</ramode>
+      <rapriority>medium</rapriority>
+    </lan>
+  </dhcpdv6>
+
+  <snmpd>
+    <syslocation></syslocation>
+    <syscontact></syscontact>
+    <rocommunity>REDACTED</rocommunity>
+  </snmpd>
+
+  <diag>
+    <ipv6nat>
+      <ipaddr></ipaddr>
+    </ipv6nat>
+  </diag>
+
+  <syslog>
+    <filterdescriptions>1</filterdescriptions>
+  </syslog>
+
+  <nat>
+    <outbound>
+      <mode>automatic</mode>
+    </outbound>
+  </nat>
+
+  <filter>
+    <rule>
+      <type>pass</type>
+      <ipprotocol>inet</ipprotocol>
+      <descr><![CDATA[Default allow LAN to any rule]]></descr>
+      <interface>lan</interface>
+      <tracker>0100000101</tracker>
+      <source>
+        <network>lan</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+    </rule>
+
+```
+<rule>
+  <type>pass</type>
+  <ipprotocol>inet6</ipprotocol>
+  <descr><![CDATA[Default allow LAN IPv6 to any rule]]></descr>
+  <interface>lan</interface>
+  <tracker>0100000102</tracker>
+  <source>
+    <network>lan</network>
+  </source>
+  <destination>
+    <any></any>
+  </destination>
+</rule>
+
+<separator>
+  <wan></wan>
+  <lan></lan>
+</separator>
+```
+
+  </filter>
+
+<shaper></shaper>
+
+  <ipsec>
+    <client></client>
+  </ipsec>
+
+<aliases></aliases> <proxyarp></proxyarp>
+
+<openvpn></openvpn>
+
+<dnshaper></dnshaper>
+
+  <unbound>
+    <enable></enable>
+    <dnssec></dnssec>
+    <active_interface></active_interface>
+    <outgoing_interface></outgoing_interface>
+    <custom_options></custom_options>
+    <hideidentity></hideidentity>
+    <hideversion></hideversion>
+    <dnssecstripped></dnssecstripped>
+  </unbound>
+
+<vlans></vlans> <qinqs></qinqs>
+
+  <revision>
+    <time>REDACTED</time>
+    <description><![CDATA[(system): lan IP configuration from console menu]]></description>
+    <username><![CDATA[(system)]]></username>
+  </revision>
+
+  <gateways>
+    <gateway_item>
+      <interface>wan</interface>
+      <gateway>10.3.0.253</gateway>
+      <name>WANGW</name>
+      <weight>1</weight>
+      <ipprotocol>inet</ipprotocol>
+      <interval></interval>
+      <descr><![CDATA[Interface wan Gateway]]></descr>
+      <nonlocalgateway></nonlocalgateway>
+    </gateway_item>
+
+```
+<gateway_item>
+  <interface>wan</interface>
+  <gateway>10.2.0.1</gateway>
+  <name>WANGW_2</name>
+  <weight>1</weight>
+  <ipprotocol>inet</ipprotocol>
+  <interval></interval>
+  <descr><![CDATA[Interface wan Gateway]]></descr>
+</gateway_item>
+
+<gateway_item>
+  <interface>lan</interface>
+  <gateway>10.3.0.1</gateway>
+  <name>LANGW</name>
+  <weight>1</weight>
+  <ipprotocol>inet</ipprotocol>
+  <interval></interval>
+  <descr><![CDATA[Interface lan Gateway]]></descr>
+</gateway_item>
+
+<defaultgw4>WANGW_2</defaultgw4>
+```
+
+  </gateways>
+
+<captiveportal></captiveportal> <dnsmasq></dnsmasq>
+
+  <ntpd>
+    <gps></gps>
+  </ntpd>
+
+  <cert>
+    <refid>REDACTED</refid>
+    <descr><![CDATA[GUI default certificate - sanitized]]></descr>
+    <type>server</type>
+    <crt>REDACTED</crt>
+    <prv>REDACTED</prv>
+  </cert>
+
+  <wizardtemp>
+    <system>
+      <hostname>pfSense</hostname>
+      <domain>home.arpa</domain>
+    </system>
+  </wizardtemp>
+</pfsense>

@@ -1,0 +1,23 @@
+{
+  "timestamp": "TIMESTAMP",
+  "rule": {
+    "level": 12,
+    "description": "Complete reverse shell lifecycle detected after malware download. IP detected: ATTACKER_IP. IP victim: VICTIM_IP",
+    "id": "110902",
+    "groups": [
+      "zeek_custom",
+      "reverse_shell_chain_download"
+    ]
+  },
+  "agent": {
+    "id": "AGENT_ID",
+    "name": "ZeekVM",
+    "ip": "ZEEK_IP"
+  },
+  "data": {
+    "source_ip": "VICTIM_IP",
+    "destination_ip": "ATTACKER_IP",
+    "uid": "UID"
+  },
+  "location": "/var/log/zeek-custom/reverse_shell_final.log"
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=Avvio Zeek
+After=network.target
+
+[Service]
+Type=forking
+User=root
+ExecStart=/opt/zeek/bin/zeekctl deploy
+ExecStop=/opt/zeek/bin/zeekctl stop
+ExecReload=/opt/zeek/bin/zeekctl restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

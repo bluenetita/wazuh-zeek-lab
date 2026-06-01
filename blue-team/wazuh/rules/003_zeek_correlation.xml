@@ -1,0 +1,67 @@
+<group name="zeek_custom,reverse_shell,correlation,">
+        <!-- Evento che scatta solamente quando scatta sia il download che l'inizio della reverse shell -->
+        <rule id="110900" level="9" timeframe="86400">
+                <if_matched_sid>100909</if_matched_sid>
+                <if_sid>100910</if_sid>
+                <same_field>source_ip</same_field>
+                <same_field>destination_ip</same_field>
+                <description>Malware download followed by reverse shell start. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_download,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="110901" level="10" timeframe="86400">
+                <if_matched_sid>110900</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>source_ip</same_field>
+                <same_field>destination_ip</same_field>
+                <description>Malware download followed by reverse shell traffic toward same remote IP. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_download,</group>
+        </rule>
+        <!-- Completa la catena Revershell (Download malware) -->
+        <rule id="110902" level="12" timeframe="86400">
+                <if_matched_sid>110901</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>source_ip</same_field>
+                <same_field>destination_ip</same_field>
+                <description>Complete reverse shell lifecycle detected after malware download. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_download,</group>
+        </rule>
+        <!-- Prova della catena no malware -->
+        <rule id="110903" level="9" frequency="2" timeframe="86400">
+                <if_matched_sid>100910</if_matched_sid>
+                <different_field>uid</different_field>
+                <same_field>source_ip</same_field>
+                <same_field>destination_ip</same_field>
+                <description>Multiple Reverse Shell with same IP. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_without_download,</group>
+        </rule>
+        <rule id="110904" level="10" timeframe="864001">
+                <if_sid>100912</if_sid>
+                <if_matched_sid>110903</if_matched_sid>
+                <same_field>uid</same_field>
+                <description>Multiple Reverse Shell with same IP followed by traffic. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_without_download,</group>
+        </rule>
+        <rule id="110905" level="12" timeframe="864001">
+                <if_sid>100911</if_sid>
+                <if_matched_sid>110904</if_matched_sid>
+                <same_field>uid</same_field>
+                <description>Multiple Reverse Shell with same IP followed by complete reverse shell lifecycle. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_without_download,</group>
+        </rule>
+        <rule id="110906" level="10" timeframe="864001">
+                <if_sid>100912</if_sid>
+                <if_matched_sid>100910</if_matched_sid>
+                <same_field>uid</same_field>
+                <description>Reverse shell start followed by traffic. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_without_download,</group>
+        </rule>
+        <rule id="110907" level="12" timeframe="864001">
+                <if_sid>100911</if_sid>
+                <if_matched_sid>110906</if_matched_sid>
+                <same_field>uid</same_field>
+                <description>Complete reverse shell lifecycle detected without malware download. IP detected: $(destination_ip). IP victim: $(source_ip)</description>
+                <group>zeek_custom,reverse_shell_chain_without_download,</group>
+        </rule>
+
+</group>

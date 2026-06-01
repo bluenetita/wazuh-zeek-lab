@@ -1,0 +1,14 @@
+[Unit]
+Description=Persist OVS Mirror for Zeek
+After=network-online.target openvswitch-switch.service
+Wants=network-online.target
+ConditionFileIsExecutable=/usr/local/bin/ovs-mirror.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ovs-mirror.sh
+RemainAfterExit=no
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target

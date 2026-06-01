@@ -1,0 +1,15 @@
+[Unit]
+Description=Makes interface run in promiscuous mode at boot
+BindsTo=sys-subsystem-net-devices-ens19.device
+After=sys-subsystem-net-devices-ens19.device
+Wants=network-online.target
+After=network-online.target
+ 
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ip link set dev ens19 up promisc on
+ExecStop=/usr/sbin/ip link set dev ens19 promisc off
+RemainAfterExit=yes
+ 
+[Install]
+WantedBy=multi-user.target

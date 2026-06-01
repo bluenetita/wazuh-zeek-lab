@@ -1,0 +1,9 @@
+InterfaceAlias       : Ethernet
+InterfaceIndex       : 2
+InterfaceDescription : Red Hat VirtIO Ethernet Adapter
+NetProfile.Name      : Rete
+IPv4Address          : 10.3.20.3
+IPv6DefaultGateway   :
+IPv4DefaultGateway   : 10.3.20.1
+DNSServer            : 1.1.1.1
+                       8.8.8.8

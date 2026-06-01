@@ -1,0 +1,24 @@
+Configurazione IP di Windows
+
+   Nome host . . . . . . . . . . . . . . : WIN-0ASBQ8O2AFB
+   Suffisso DNS primario . . . . . . . . :
+   Tipo nodo . . . . . . . . . . . . . . : Ibrido
+   Routing IP abilitato. . . . . . . . . : No
+   Proxy WINS abilitato . . . . . . . .  : No
+
+Scheda Ethernet Ethernet:
+
+   Suffisso DNS specifico per connessione:
+   Descrizione . . . . . . . . . . . . . : Red Hat VirtIO Ethernet Adapter
+   Indirizzo fisico. . . . . . . . . . . : BC-24-11-F8-57-35
+   DHCP abilitato. . . . . . . . . . . . : No
+   Configurazione automatica abilitata   : Sì
+   Indirizzo IPv6 locale rispetto al collegamento . : fe80::ddd4:1280:fb26:ec06%2(Preferenziale)
+   Indirizzo IPv4. . . . . . . . . . . . : 10.3.20.3(Preferenziale)
+   Subnet mask . . . . . . . . . . . . . : 255.255.255.0
+   Gateway predefinito . . . . . . . . . : 10.3.20.1
+   IAID DHCPv6 . . . . . . . . . . . : 112993297
+   DUID Client DHCPv6. . . . . . . . : 00-01-01-00-31-76-3B-F3-BC-24-11-F8-57-35   
+   Server DNS . . . . . . . . . . . . .  : 1.1.1.1
+                                           8.8.8.8
+   NetBIOS su TCP/IP . . . . . . . . . . : Attivato
