@@ -1,0 +1,11 @@
+<group name="auditd,reverse_shell,">
+        <rule id="110900" level="5">
+                <decoded_as>auditd_rs_connect_enriched</decoded_as>
+                <field name="success">yes</field>
+                <field name="syscall">42</field>
+                <field name="dest_port" type="pcre2">^(?!0$).+</field>
+                <field name="dest_ip" type="pcre2">^(?!127\.0\.0\.1$|127\.0\.0\.53$|10\.3\.20\.2$).+</field>
+                <description>auditd: outbound connect syscall detected. File $(file_name), process $(process_binary) connected to $(dest_ip):$(dest_port)</description>
+                <group>auditd,reverse_shell_endpoint,connect,</group>
+        </rule>
+</group>

@@ -1,0 +1,4 @@
+ROUTEROS_USER="wazuh-quarantine"
+ROUTEROS_HOST="10.3.0.1"
+ROUTEROS_SSH_KEY="/var/ossec/.ssh/routeros_quarantine"
+QUARANTINE_LIST="Quarantine"

@@ -1,0 +1,289 @@
+<group name="zeek_custom,reverse_shell,correlation,">
+        <!-- CATENA MALWARE (FILE_NAME) con indirizzo IP diverso -->
+        <!-- Evento connect + malware download -->
+        <rule id="120900" level="5" frequency="2" timeframe="900">
+                <if_matched_sid>100909</if_matched_sid>
+                <if_sid>110900</if_sid>
+                <same_field>file_name</same_field>
+                <different_field>dest_ip</different_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) from possible malware downloaded from a different destination IP, file: $(process_binary). Destination IP: $(dest_ip):$(dest_port)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Prima catena nel caso scatti prima 120900 e successivamente 100910 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120901" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>120900</if_matched_sid>
+                <if_sid>100910</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware downloaded from a different destination IP. Destination IP: $(dest_ip):$(dest_port). Victim IP: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120902" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120901</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>uid</same_field>
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware downloaded from a different destination IP! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120903" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120902</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>uid</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware download downloaded from a different destination IP. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Seconda catena nel caso scatti prima 100910 e poi 120900 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120904" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>100910</if_matched_sid>
+                <if_sid>120900</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware downloaded from a different destination IP. Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120905" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120904</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware downloaded from a different destination IP! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120906" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120905</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware downloaded from a different destination IP. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+
+
+
+
+
+
+
+
+        <!-- CATENA SENZA MALWARE -->
+        <!-- Prima catena 110900.. 100910 -->
+        <rule id="120907" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>110900</if_matched_sid>
+                <if_sid>100910</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware. Destination IP: $(dest_ip):$(dest_port). Victim IP: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120908" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120907</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>uid</same_field>
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120909" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120908</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>uid</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware download. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Seconda catena 100910.. 110900 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120910" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>100910</if_matched_sid>
+                <if_sid>110900</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware. Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120911" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120910</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120912" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120911</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware download. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+
+
+
+
+
+
+
+
+        <!-- CATENA MALWARE CON STESSP INDIRIZZO IP MA NOME_FILE DIVERSO -->
+        <!-- Evento connect + malware download -->
+        <rule id="120913" level="5" frequency="2" timeframe="900">
+                <if_matched_sid>100909</if_matched_sid>
+                <if_sid>110900</if_sid>
+                <same_field>dest_ip</same_field>
+                <different_field>file_name</different_field>
+                <field name="file_name" negate="yes" type="pcre2">^/(wget|curl)$</field>
+                <global_frequency />
+                <description>Syslog Connect (local event) from possible malware with same destination IP, file from: $(process_binary). Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Prima catena nel caso scatti prima 120900 e successivamente 100910 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120914" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>120913</if_matched_sid>
+                <if_sid>100910</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware with same destination IP. Destination IP: $(dest_ip):$(dest_port). Victim IP: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120915" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120914</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>uid</same_field>
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware with same destination IP! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120916" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120915</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>uid</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware download with same destination IP. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Seconda catena 100910.. 110900 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120917" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>100910</if_matched_sid>
+                <if_sid>120913</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible malware with same destination IP. Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120918" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120917</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware with same destination IP! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120919" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120918</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware download with same destination IP. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+
+
+
+
+
+
+
+
+
+        <!-- CATENA MALWARE CON STESSP INDIRIZZO IP E STESSO NOME DEL FILE -->
+        <!-- Evento connect + malware download -->
+        <rule id="120920" level="5" frequency="2" timeframe="900">
+                <if_matched_sid>100909</if_matched_sid>
+                <if_sid>110900</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>file_name</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) from possible Malware downloaded from same destination IP and executed from same file name, file from: $(process_binary). Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Prima catena nel caso scatti prima 120900 e successivamente 100910 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120921" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>120920</if_matched_sid>
+                <if_sid>100910</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible Malware downloaded from same destination IP and executed from same file name. Destination IP: $(dest_ip):$(dest_port). Victim IP: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120922" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120921</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>uid</same_field>
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware downloaded from same destination IP and executed from same file name! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120923" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120922</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>uid</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware downloaded from same destination IP and executed from same file name. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Seconda catena 100910.. 110900 -->
+        <!-- Evento connect + rev_shell_live -->
+        <rule id="120924" level="8" frequency="2" timeframe="900">
+                <if_matched_sid>100910</if_matched_sid>
+                <if_sid>120920</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Syslog Connect (local event) + Reverse Shell start from possible Malware downloaded from same destination IP and executed from same file name. Destination IP: $(dest_ip):$(dest_port).</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Regola prima + movement -->
+        <rule id="120925" level="10" frequency="2" timeframe="1800">
+                <if_matched_sid>120924</if_matched_sid>
+                <if_sid>100912</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <global_frequency />
+                <description>Possible REVERSE SHELL TRAFFIC detected caused by a possible Malware downloaded from same destination IP and executed from same file name! IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+        <!-- Scatta quando è scattata la prima regola (considera il movimento) -->
+        <rule id="120926" level="12" frequency="2" timeframe="3600">
+                <if_matched_sid>120925</if_matched_sid>
+                <if_sid>100911</if_sid>
+                <same_field>dest_ip</same_field>
+                <same_field>dest_port</same_field>
+                <description>COMPLETE REVERSE SHELL lifecycle detected after Malware downloaded from same destination IP and executed from same file name. IP detected: $(dest_ip):$(dest_port). IP victim: $(src_ip). Origin bytes: $(orig_bytes). Response bytes: $(resp_bytes)</description>
+                <group>zeek_custom,reverse_shell_chain,</group>
+        </rule>
+</group>

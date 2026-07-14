@@ -1,0 +1,223 @@
+<!--
+  Decoder AppArmor autonomo.
+  Non modifica e non sostituisce il decoder auditd standard.
+-->
+
+<decoder name="apparmor_audit">
+  <prematch type="pcre2">^(?:node=\S+\s+)?type=(?:AVC|USER_AVC|1400|1107)\b.*\bapparmor="</prematch>
+</decoder>
+
+<!-- Tipo del record Audit e ID evento -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">type=([A-Z0-9_]+)\s+msg=audit\([^:]+:([0-9]+)\):</regex>
+  <order>apparmor.audit_type,apparmor.audit_id</order>
+</decoder>
+
+<!-- Risultato AppArmor: ALLOWED, DENIED, STATUS ecc. -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">apparmor="([^"]+)"</regex>
+  <order>apparmor.event</order>
+</decoder>
+
+<!-- Operazione: open, capable, profile_load, signal ecc. -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">operation="([^"]+)"</regex>
+  <order>apparmor.operation</order>
+</decoder>
+
+<!-- Classe dell'oggetto -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">class="([^"]+)"</regex>
+  <order>apparmor.object_class</order>
+</decoder>
+
+<!-- Profilo che ha generato la decisione -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">profile="([^"]+)"</regex>
+  <order>apparmor.profile</order>
+</decoder>
+
+<!-- Risorsa interessata -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">name="([^"]+)"</regex>
+  <order>apparmor.name</order>
+</decoder>
+
+<!-- Eventuale seconda risorsa, ad esempio rename -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">name2="([^"]+)"</regex>
+  <order>apparmor.name2</order>
+</decoder>
+
+<!-- Processo -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bpid=([0-9]+)</regex>
+  <order>apparmor.pid</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bcomm="([^"]+)"</regex>
+  <order>apparmor.command</order>
+</decoder>
+
+<!-- Permessi richiesti e non concessi -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">requested_mask="([^"]+)"</regex>
+  <order>apparmor.requested</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">denied_mask="([^"]+)"</regex>
+  <order>apparmor.denied</order>
+</decoder>
+
+<!-- Formato alternativo usato da alcuni eventi -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\brequested="([^"]+)"</regex>
+  <order>apparmor.requested</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bdenied="([^"]+)"</regex>
+  <order>apparmor.denied</order>
+</decoder>
+
+<!-- UID -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bfsuid=([0-9]+)</regex>
+  <order>apparmor.fsuid</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bouid=([0-9]+)</regex>
+  <order>apparmor.ouid</order>
+</decoder>
+
+<!-- Diagnostica -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\binfo="([^"]+)"</regex>
+  <order>apparmor.info</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\berror=(-?[0-9]+)</regex>
+  <order>apparmor.error</order>
+</decoder>
+
+<!-- Capability -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bcapability=([0-9]+)</regex>
+  <order>apparmor.capability</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bcapname="([^"]+)"</regex>
+  <order>apparmor.capability_name</order>
+</decoder>
+
+<!-- Signal e ptrace -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bsignal="([^"]+)"</regex>
+  <order>apparmor.signal</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bpeer="([^"]+)"</regex>
+  <order>apparmor.peer</order>
+</decoder>
+
+<!-- Rete -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bfamily="([^"]+)"</regex>
+  <order>apparmor.network_family</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bsock_type="([^"]+)"</regex>
+  <order>apparmor.socket_type</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bprotocol=([0-9]+)</regex>
+  <order>apparmor.protocol</order>
+</decoder>
+
+<!-- D-Bus -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bbus="([^"]+)"</regex>
+  <order>apparmor.dbus_bus</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bpath="([^"]+)"</regex>
+  <order>apparmor.dbus_path</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\binterface="([^"]+)"</regex>
+  <order>apparmor.dbus_interface</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bmember="([^"]+)"</regex>
+  <order>apparmor.dbus_member</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bpeer_label="([^"]+)"</regex>
+  <order>apparmor.peer_label</order>
+</decoder>
+
+<!-- Mount e namespace -->
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bsrcname="([^"]+)"</regex>
+  <order>apparmor.source_name</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bfstype="([^"]+)"</regex>
+  <order>apparmor.filesystem_type</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\btarget="([^"]+)"</regex>
+  <order>apparmor.target</order>
+</decoder>
+
+<decoder name="apparmor_audit">
+  <parent>apparmor_audit</parent>
+  <regex type="pcre2">\bexecpath="([^"]+)"</regex>
+  <order>apparmor.execpath</order>
+</decoder>

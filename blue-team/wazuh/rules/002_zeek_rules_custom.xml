@@ -1,31 +1,49 @@
 <group name="zeek_custom,reverse_shell,">
+  <!-- Reverse Shell -->
   <rule id="100909" level="5">
     <if_sid>100900</if_sid>
     <location>/var/log/zeek-custom/possible_malware.log</location>
     <field name="event_type">possible_malware</field>
     <field type="pcre2" name="sha1">\w+</field>
-    <description>Zeek: file $(file_name) possible malware, source ip $(source_ip), destination ip $(destination_ip), destination port $(destination_port), mime type $(mime_type), total bytes $(total_bytes), sha1 $(sha1), sha256 $(sha256), note $(note).</description>
+    <description>Zeek: file $(file_name) possible malware, source ip $(src_ip), destination ip $(dest_ip), destination port $(dest_port), mime type $(mime_type), total bytes $(total_bytes), sha1 $(sha1), sha256 $(sha256), note $(note).</description>
     <group>zeek_custom,malware,reverse_shell_stage,</group>
   </rule>
   <rule id="100910" level="5">
     <if_sid>100900</if_sid>
     <location>/var/log/zeek-custom/reverse_shell_live.log</location>
     <field name="event_type">reverse_shell_live</field>
-    <description>Zeek: Possible Reverse shell (live). uid: $(uid), source ip: $(source_ip), destination ip: $(destination_ip), destination port: $(destination_port), payload type: $(payload_type).</description>
+    <description>Zeek: Possible Reverse shell (live). uid: $(uid), source ip: $(src_ip), destination ip: $(dest_ip), destination port: $(dest_port), payload type: $(weird_name).</description>
     <group>zeek_custom,reverse_shell_stage,reverse_shell_start_chain,</group>
   </rule>
   <rule id="100911" level="5">
     <if_sid>100900</if_sid>
     <location>/var/log/zeek-custom/reverse_shell_final.log</location>
     <field name="event_type">reverse_shell_final</field>
-    <description>Zeek: Possible Reverse shell (closed). uid: $(uid), source ip: $(source_ip), destination ip: $(destination_ip), destination port: $(destination_port), payload type: $(payload_type), duration: $(duration), origin bytes: $(origin_bytes), response bytes: $(response_bytes).</description>
+    <description>Zeek: Possible Reverse shell (closed). uid: $(uid), source ip: $(src_ip), destination ip: $(dest_ip), destination port: $(dest_port), payload type: $(weird_name), duration: $(duration), origin bytes: $(orig_bytes), response bytes: $(resp_bytes).</description>
     <group>zeek_custom,reverse_shell_stage,</group>
   </rule>
   <rule id="100912" level="5">
     <if_sid>100900</if_sid>
     <location>/var/log/zeek-custom/reverse_shell_movement.log</location>
     <field name="event_type">reverse_shell_movement</field>
-    <description>Zeek: Possible Reverse shell (traffic). uid: $(uid), source ip: $(source_ip), destination ip: $(destination_ip), destination port: $(destination_port), payload type: $(payload_type), duration: $(duration), origin bytes: $(origin_bytes), response bytes: $(response_bytes), origin packets: $(origin_packets), responsepackets: $(response_packets).</description>
+    <description>Zeek: Possible Reverse shell (traffic). uid: $(uid), source ip: $(src_ip), destination ip: $(dest_ip), destination port: $(dest_port), payload type: $(weird_name), duration: $(duration), origin bytes: $(orig_bytes), response bytes: $(resp_bytes), origin packets: $(orig_pkts), responsepackets: $(resp_pkts).</description>
     <group>zeek_custom,reverse_shell_stage,</group>
   </rule>
+
+  <!-- Data Exfiltration -->
+  <rule id="100913" level="3">
+    <if_sid>100900</if_sid>
+    <location>/var/log/zeek-custom/data_exfiltration.log</location>
+    <field name="event_type">baseline_completed</field>
+    <description>Zeek: Baseline completed and dynamic threshold calculated. src_ip: $(src_ip)</description>
+    <group>zeek_custom,data_exfiltration,</group>
+  </rule>
+  <rule id="100914" level="8">
+    <if_sid>100900</if_sid>
+    <location>/var/log/zeek-custom/data_exfiltration.log</location>
+    <field name="event_type">possible_data_exfiltration</field>
+    <description>Zeek: Total outgoing bytes exceeding the dynamic threshold. Possible Data Exfiltration. src_ip: $(src_ip), dest_ip: $(dest_ip):$(dest_port)</description>
+    <group>zeek_custom,data_exfiltration,</group>
+  </rule>
+
 </group>

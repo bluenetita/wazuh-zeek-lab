@@ -1,0 +1,5 @@
+<decoder name="auditd_rs_connect_enriched">
+  <prematch>key="rs_connect"</prematch>
+  <regex type="pcre2">type=SYSCALL msg=audit\([^:]+:([0-9]+)\):.*syscall=([0-9]+).*success=([^ ]+).*ppid=([0-9]+).*pid=([0-9]+).*auid=([^ ]+).*uid=([^ ]+).*euid=([^ ]+).*tty=([^ ]+).*ses=([^ ]+).*comm="([^"]+)".*exe="([^"]+(/[^"/]+))".*key="rs_connect".*SADDR=\{\s*saddr_fam=inet\s+laddr=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s+lport=([0-9]+)\s*\}</regex>
+  <order>audit_id,syscall,success,ppid,pid,auid,uid,euid,tty,ses,process_name,process_binary,file_name,dest_ip,dest_port</order>
+</decoder>
