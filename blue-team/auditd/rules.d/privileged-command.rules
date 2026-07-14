@@ -1,0 +1,19 @@
+# sudo execution by users
+-a always,exit -F arch=b64 -S execve -F euid=0 -F auid>=1000 -F auid!=4294967295 -F exe=/usr/bin/sudo -k sudo_exec
+-a always,exit -F arch=b32 -S execve -F euid=0 -F auid>=1000 -F auid!=4294967295 -F exe=/usr/bin/sudo -k sudo_exec
+
+# su execution by users
+-a always,exit -F arch=b64 -S execve -F euid=0 -F auid>=1000 -F auid!=4294967295 -F exe=/usr/bin/su -k su_exec
+-a always,exit -F arch=b32 -S execve -F euid=0 -F auid>=1000 -F auid!=4294967295 -F exe=/usr/bin/su -k su_exec
+
+# Non-root executing with effective root UID (SUID)
+-a always,exit -F arch=b64 -S execve -F uid!=0 -F euid=0 -k suid_exec
+-a always,exit -F arch=b32 -S execve -F uid!=0 -F euid=0 -k suid_exec
+
+# Direct root-session command execution.
+-a always,exit -F arch=b64 -S execve -F uid=0 -F auid=0 -k root_exec
+-a always,exit -F arch=b32 -S execve -F uid=0 -F auid=0 -k root_exec
+
+# Execution from download folder
+-a always,exit -F arch=b64 -S execve -F dir=/home/client/Downloads -k download_exec
+-a always,exit -F arch=b32 -S execve -F dir=/home/client/Downloads -k download_exec

@@ -1,0 +1,46 @@
+## Sintassi:
+## -a: aggiunge una regola
+## always: registra sempre l'evento se la regola combacia
+## exit: controlla la syscall quando termina
+## -F: è un filtro
+## arch=b64: applica le regola alle syscall a 64 bit
+## arch=b32: applica la regola alle syscall a 32 bit
+## -S execve: indica il tipo di syscall da monitorare, in questo caso riguarda l'esecuzione di un programma
+## -k rs_execve: assegna agli eventi la chiave rs_execve
+## -S socket -S connect: monitora due syscall socket e connect
+## socket: processo che crea un socket di rete
+## connect: processo che prova a connettersi a un indirizzo remoto
+## -w /bin/bash -p x -k rs_shell: Guarda questo file specifico, se viene eseguito, genera evento audit
+## -w: metti un watch
+## -p x: controlla il permesso di esecuzione (r: lettura, w: scrittura, x: esecuzione, a: cambio attributi)
+## -S connect: dice ad auditd di monitorare la syscall
+## -F succes=1: registra solo le connessioni riuscite
+## -F auid>=1000: filtra gli eventi generati da utenti reali (UID 0=root, UID 1-999=utenti di sistema / servizi, UID>=1000 = utenti umani)
+## -F auid!=4294967295: esclude gli eventi senza login audit valido (corrisponde spesso a 'unset')
+
+## Reverse shell - process execution: monitora l'esecuzione di processi (escuzione del programma)
+##-a always,exit -F arch=b64 -S execve -F auid>=1000 -F auid!=4294967295 -k rs_execve
+##-a always,exit -F arch=b32 -S execve -F auid>=1000 -F auid!=4294967295 -k rs_execve
+
+## Reverse shell - network syscalls: monitora syscall socket e connect (tentativi di connessione)
+-a always,exit -F arch=b64 -S connect -F success=1 -F auid>=1000 -F auid!=4294967295 -k rs_connect
+-a always,exit -F arch=b32 -S connect -F success=1 -F auid>=1000 -F auid!=4294967295 -k rs_connect
+
+## Suspicious shell/interpreter execution: genera evento se eseguiti uno di questi programmi
+##-w /bin/bash -p x -k rs_shell
+##-w /bin/sh -p x -k rs_shell
+##-w /usr/bin/bash -p x -k rs_shell
+##-w /usr/bin/sh -p x -k rs_shell
+
+##-w /usr/bin/python -p x -k rs_interpreter
+##-w /usr/bin/python3 -p x -k rs_interpreter
+##-w /usr/bin/perl -p x -k rs_interpreter
+##-w /usr/bin/php -p x -k rs_interpreter
+##-w /usr/bin/ruby -p x -k rs_interpreter
+
+## Common reverse shell tools
+##-w /usr/bin/nc -p x -k rs_netcat
+##-w /bin/nc -p x -k rs_netcat
+##-w /usr/bin/ncat -p x -k rs_netcat
+##-w /usr/bin/socat -p x -k rs_socat
+##-w /usr/bin/telnet -p x -k rs_telnet
