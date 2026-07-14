@@ -1,85 +1,469 @@
 # RouterOS Firewall Rules
 
-Questo documento descrive le regole firewall configurate su RouterOS.
+This document describes the RouterOS firewall rules used in the laboratory, with particular attention to the automated quarantine workflow integrated with Wazuh Active Response.
 
-RouterOS gestisce il routing inter-VLAN e applica regole firewall sulla chain `forward`.
+RouterOS provides the network-enforcement layer responsible for restricting traffic associated with compromised endpoints.
 
-## Obiettivo
+## Purpose
 
-Le regole firewall hanno lo scopo di:
+The firewall configuration supports the following objectives:
 
-* consentire traffico inter-VLAN previsto;
-* consentire traffico dalle VLAN verso WAN;
-* consentire accessi dalla VPN verso le VLAN;
-* bloccare tutto il traffico non esplicitamente consentito.
+* control traffic between laboratory networks;
+* preserve management connectivity;
+* restrict communication from quarantined endpoints;
+* block traffic directed to quarantined endpoints when required;
+* interrupt already established malicious connections;
+* support automated containment after high-confidence Wazuh alerts.
 
-## Policy generale
+## Related components
 
-La configurazione segue una logica allow-list:
+The quarantine firewall configuration works together with:
 
-1. accetta traffico established/related;
-2. consente traffico tra VLAN autorizzate;
-3. consente traffico VLAN verso WAN;
-4. consente traffico VPN verso VLAN su porte specifiche;
-5. blocca tutto il resto.
-
-## Regole forward
-
-| ID | Chain   | Azione               | Sorgente            | Destinazione        | Protocollo/Porta | Commento                      |
-| -: | ------- | -------------------- | ------------------- | ------------------- | ---------------- | ----------------------------- |
-|  1 | forward | fasttrack-connection | established/related | established/related | Any              | FastTrack established/related |
-|  2 | forward | accept               | established/related | established/related | Any              | Accept established/related    |
-|  3 | forward | accept               | `vlan10`            | `vlan20`            | Any              | VLAN10 -> VLAN20              |
-|  4 | forward | accept               | `vlan20`            | `vlan10`            | Any              | VLAN20 -> VLAN10              |
-|  5 | forward | accept               | `vlan10`            | `vlan30`            | Any              | VLAN10 -> VLAN30              |
-|  6 | forward | accept               | `vlan30`            | `vlan10`            | Any              | VLAN30 -> VLAN10              |
-|  7 | forward | accept               | `vlan20`            | `vlan30`            | Any              | VLAN20 -> VLAN30              |
-|  8 | forward | accept               | `vlan30`            | `vlan20`            | Any              | VLAN30 -> VLAN20              |
-|  9 | forward | accept               | `vlan10`            | `ether1`            | Any              | VLAN10 -> WAN                 |
-| 10 | forward | accept               | `vlan20`            | `ether1`            | Any              | VLAN20 -> WAN                 |
-| 11 | forward | accept               | `vlan30`            | `ether1`            | Any              | VLAN30 -> WAN                 |
-| 12 | forward | accept               | `10.8.0.0/24`       | `10.3.0.0/16`       | TCP/22           | VPN SSH to VLANs              |
-| 13 | forward | accept               | `10.8.0.0/24`       | `10.3.0.0/16`       | RDP              | VPN RDP to VLANs              |
-| 14 | forward | accept               | `10.8.0.0/24`       | `10.3.0.0/16`       | TCP/443          | VPN HTTPS to VLANs            |
-| 15 | forward | accept               | `10.8.0.0/24`       | `10.3.0.0/16`       | TCP/80           | VPN HTTP to VLANs             |
-| 16 | forward | drop                 | Any                 | Any                 | Any              | Drop everything else          |
-
-## NAT
-
-RouterOS applica masquerade verso `ether1`.
-
-| Chain  | Azione     | Out interface | Commento      |
-| ------ | ---------- | ------------- | ------------- |
-| srcnat | masquerade | `ether1`      | NAT LAN > WAN |
-
-Configurazione esportata:
-
-```rsc
-/ip firewall nat
-add action=masquerade chain=srcnat comment="NAT LAN > WAN" out-interface=ether1
+```text
+blue-team/wazuh/active-response/manager/routeros_quarantine.py
+blue-team/wazuh/active-response/manager/routeros.conf.example
+blue-team/wazuh/manager/ossec.conf
+blue-team/wazuh/rules/004_zeek_auditd_correlation.xml
+network/routeros/quarantine.md
+network/routeros/config/quarantine-firewall.rsc
 ```
 
-## Considerazioni
+## Quarantine address list
 
-La presenza del masquerade su RouterOS significa che il traffico in uscita verso pfSense può apparire con IP sorgente di RouterOS (`10.4.0.252`) invece dell'IP originale della VM.
+The containment workflow uses the RouterOS firewall address list:
 
-Questo è importante per l'analisi di:
+```text
+Quarantine
+```
 
-* log pfSense;
-* log Zeek;
-* scenari di data exfiltration;
-* reverse shell;
-* traffico verso rete esterna.
+The list is populated dynamically by the Wazuh Active Response script.
 
-## Relazione con pfSense
+When a high-confidence reverse-shell correlation rule triggers, the script extracts the victim IP address from the Wazuh alert and executes an operation equivalent to:
 
-RouterOS filtra e fa NAT prima di inoltrare verso pfSense.
+```routeros
+/ip firewall address-list add \
+    list=Quarantine \
+    address=VICTIM_IP \
+    comment="Wazuh alert information"
+```
 
-pfSense riceve il traffico da RouterOS sull'interfaccia collegata alla rete `10.4.0.0/24`.
+Before adding an entry, the script verifies whether the address is already present.
 
-## Note operative
+This prevents duplicate entries for the same endpoint.
 
-* Il filtraggio principale tra VLAN avviene su RouterOS.
-* pfSense controlla il traffico tra RouterOS e rete esterna.
-* La regola finale `Drop everything else` rende importante documentare ogni eccezione necessaria agli scenari.
-* Se uno scenario non funziona, verificare se il traffico è bloccato da RouterOS prima di arrivare a pfSense.
+Current members of the `Quarantine` list are runtime state and are not included in the repository.
+
+## Firewall processing flow
+
+The logical processing flow is:
+
+```text
+Packet received by RouterOS
+          |
+          v
+Connection tracking
+          |
+          v
+Quarantine rules
+          |
+          +--> Source belongs to Quarantine
+          |          |
+          |          v
+          |     Apply containment policy
+          |
+          +--> Destination belongs to Quarantine
+                     |
+                     v
+                Apply containment policy
+          |
+          v
+Remaining firewall rules
+```
+
+## Rule ordering
+
+RouterOS processes firewall filter rules in order.
+
+The quarantine rules must be evaluated before rules that could otherwise permit the same traffic, including:
+
+* generic forwarding rules;
+* broad internal-network accept rules;
+* established and related connection rules;
+* FastTrack rules;
+* default allow rules.
+
+Incorrect ordering could cause a quarantined endpoint to remain reachable even after its address has been added to the `Quarantine` list.
+
+The exact placement must be verified with:
+
+```routeros
+/ip firewall filter print
+```
+
+## Implemented quarantine rules
+
+The real sanitized RouterOS rules are stored in:
+
+```text
+network/routeros/config/quarantine-firewall.rsc
+```
+
+They can be displayed directly on RouterOS with:
+
+```routeros
+/ip firewall filter print detail where src-address-list="Quarantine"
+```
+
+```routeros
+/ip firewall filter print detail where dst-address-list="Quarantine"
+```
+
+```routeros
+/ip firewall filter print detail where comment~"Quarantine"
+```
+
+The corresponding export can be displayed in the terminal without creating files:
+
+```routeros
+/ip firewall filter export terse
+```
+
+Only the lines related to the `Quarantine` address list should be copied into the repository.
+
+### Rules configured in the laboratory
+
+Replace the placeholders below with the sanitized rules actually returned by RouterOS:
+
+```routeros
+/ip firewall filter
+
+# Paste the real rule that handles traffic originating from Quarantine.
+# add action=... chain=... src-address-list=Quarantine ...
+
+# Paste the real rule that handles traffic directed to Quarantine.
+# add action=... chain=... dst-address-list=Quarantine ...
+
+# Paste any required management exception associated with Quarantine.
+# add action=... chain=... src-address-list=Quarantine ...
+```
+
+Do not copy unrelated firewall rules into this section.
+
+## Source quarantine
+
+A rule using:
+
+```text
+src-address-list=Quarantine
+```
+
+matches packets generated by a quarantined endpoint.
+
+Depending on the laboratory policy, this rule can:
+
+* drop all forwarded traffic;
+* permit only Wazuh management traffic;
+* permit access to forensic or remediation services;
+* block communication with attacker-controlled systems;
+* prevent lateral movement.
+
+The exact behavior is determined by the `action`, chain, destination and protocol fields configured on RouterOS.
+
+## Destination quarantine
+
+A rule using:
+
+```text
+dst-address-list=Quarantine
+```
+
+matches traffic directed toward a quarantined endpoint.
+
+This can be used to:
+
+* prevent other hosts from communicating with the compromised endpoint;
+* reduce lateral movement toward the isolated system;
+* restrict inbound traffic during investigation;
+* preserve only approved management access.
+
+## Management exceptions
+
+A quarantine policy may require selected traffic to remain available for:
+
+* Wazuh agent communication;
+* SSH administration;
+* forensic acquisition;
+* system remediation;
+* monitoring;
+* evidence transfer.
+
+Any exception must be placed before the final quarantine drop rule.
+
+An exception should be as specific as possible and should restrict:
+
+* source address;
+* destination address;
+* protocol;
+* destination port;
+* connection direction.
+
+Broad accept rules should not be used as quarantine exceptions.
+
+## Connection tracking
+
+RouterOS maintains a connection-tracking table for active connections.
+
+Adding an address to the `Quarantine` list does not necessarily terminate connections that are already established.
+
+For this reason, the Wazuh Active Response also removes connections in which the victim appears as the source or destination.
+
+The Python script executes operations equivalent to:
+
+```routeros
+/ip firewall connection remove \
+    [find where src-address~"^VICTIM_IP"]
+
+/ip firewall connection remove \
+    [find where dst-address~"^VICTIM_IP"]
+```
+
+This interrupts existing sessions, including the active reverse-shell TCP connection.
+
+## FastTrack considerations
+
+FastTrack can cause established traffic to bypass parts of normal firewall processing.
+
+The quarantine workflow mitigates this by:
+
+1. placing quarantine rules before generic FastTrack rules;
+2. adding the endpoint to the `Quarantine` address list;
+3. removing existing connection-tracking entries.
+
+After the connection entry is removed, subsequent packets are evaluated as a new connection and should match the quarantine policy.
+
+## Wazuh integration
+
+The RouterOS quarantine is triggered by Wazuh Active Response.
+
+The manager command is defined as:
+
+```xml
+<command>
+  <name>quarantine-routeros</name>
+  <executable>routeros_quarantine.py</executable>
+  <timeout_allowed>no</timeout_allowed>
+</command>
+```
+
+The response runs on the Wazuh Manager:
+
+```xml
+<active-response>
+  <command>quarantine-routeros</command>
+  <location>server</location>
+  <rules_id>120902,120905,120908,120911,120915,120918,120922,120925</rules_id>
+</active-response>
+```
+
+These rules correspond to the reverse-shell movement stage of the Wazuh correlation chains.
+
+At this stage, the detection combines endpoint and network evidence and has a higher confidence than an isolated Auditd or Zeek event.
+
+## Containment flow
+
+```text
+Reverse-shell traffic
+        |
+        v
+Zeek custom detection
+        |
+        +
+Auditd endpoint connection
+        |
+        v
+Wazuh correlation
+        |
+        v
+High-confidence movement rule
+        |
+        v
+routeros_quarantine.py
+        |
+        v
+Victim added to Quarantine
+        |
+        v
+Firewall policy applied
+        |
+        v
+Connection-tracking entries removed
+        |
+        v
+Reverse shell interrupted
+```
+
+## Verification
+
+### Display quarantine rules
+
+```routeros
+/ip firewall filter print detail where src-address-list="Quarantine"
+```
+
+```routeros
+/ip firewall filter print detail where dst-address-list="Quarantine"
+```
+
+### Display rule order
+
+```routeros
+/ip firewall filter print
+```
+
+### Display quarantined endpoints
+
+```routeros
+/ip firewall address-list print detail where list="Quarantine"
+```
+
+### Display connections involving an endpoint
+
+Replace `VICTIM_IP` with the address being investigated:
+
+```routeros
+/ip firewall connection print detail where src-address~"^VICTIM_IP"
+```
+
+```routeros
+/ip firewall connection print detail where dst-address~"^VICTIM_IP"
+```
+
+### Verify the Active Response result
+
+On the Wazuh Manager:
+
+```bash
+sudo tail -n 100 /var/ossec/logs/active-responses.log
+```
+
+A successful containment operation produces a message similar to:
+
+```text
+routeros_quarantine: Quarantined ip=VICTIM_IP rule_id=RULE_ID agent=AGENT_NAME and removed active connections
+```
+
+## Manual test
+
+A controlled test should verify that:
+
+1. the victim is not initially present in `Quarantine`;
+2. the reverse-shell scenario generates the expected Wazuh correlation rule;
+3. the Active Response script executes;
+4. the victim IP is added to `Quarantine`;
+5. the firewall counters increase on the expected quarantine rule;
+6. existing connection-tracking entries are removed;
+7. the reverse shell is interrupted;
+8. required management traffic remains available.
+
+Rule counters can be inspected with:
+
+```routeros
+/ip firewall filter print stats
+```
+
+## Manual recovery
+
+Removing an endpoint from quarantine is a manual operation.
+
+```routeros
+/ip firewall address-list remove \
+    [find where list="Quarantine" address="VICTIM_IP"]
+```
+
+Verify removal:
+
+```routeros
+/ip firewall address-list print detail where list="Quarantine"
+```
+
+Removing the address restores the possibility of network communication according to the remaining firewall policy.
+
+Normal access should be restored only after:
+
+* terminating malicious processes;
+* removing malicious files;
+* checking persistence mechanisms;
+* collecting relevant evidence;
+* reviewing credentials;
+* completing endpoint remediation.
+
+## Security considerations
+
+Automatic firewall containment can affect legitimate systems and should only be triggered by high-confidence rules.
+
+The following controls are required:
+
+* validate the victim IP before executing RouterOS commands;
+* restrict quarantine to authorized laboratory networks;
+* prevent quarantine of RouterOS, Wazuh and management hosts;
+* use SSH public-key authentication;
+* use strict host-key verification;
+* protect the SSH private key;
+* associate quarantine only with high-confidence Wazuh rules;
+* log all containment actions;
+* keep recovery separate from automatic quarantine.
+
+## Current limitations
+
+The current firewall workflow does not provide:
+
+* automatic quarantine expiration;
+* automatic removal from the address list;
+* an approval process before isolation;
+* automatic endpoint remediation;
+* dynamic management exceptions;
+* protection against all possible false-positive IP selections;
+* a dedicated least-privilege RouterOS group.
+
+The current RouterOS account uses the built-in `write` group.
+
+A future hardening activity should create a dedicated group with only the privileges required for:
+
+* SSH access;
+* reading firewall state;
+* modifying the `Quarantine` address list;
+* removing connection-tracking entries.
+
+## Repository hygiene
+
+Do not commit:
+
+* complete RouterOS exports;
+* binary RouterOS backups;
+* live connection-tracking output;
+* current quarantine entries;
+* passwords;
+* SSH private keys;
+* SSH public-key files;
+* RouterOS system IDs;
+* serial numbers;
+* sensitive comments;
+* unredacted operational logs.
+
+The repository should contain only:
+
+* sanitized quarantine firewall rules;
+* documentation;
+* reproducible configuration;
+* sanitized test evidence.
+
+## Related documentation
+
+```text
+network/routeros/README.md
+network/routeros/quarantine.md
+network/routeros/config/quarantine-firewall.rsc
+network/routeros/config/wazuh-quarantine-user.rsc
+blue-team/wazuh/active-response/README.md
+blue-team/wazuh/active-response/manager/routeros_quarantine.py
+```
