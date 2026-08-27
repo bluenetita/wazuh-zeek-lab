@@ -1,0 +1,3 @@
+---
+# Change this single value when the Wazuh Manager has a different address.
+wazuh_manager_address: "10.3.10.3"

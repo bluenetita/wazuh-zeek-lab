@@ -1,0 +1,15 @@
+network:
+  version: 2
+  ethernets:
+    {{ zeek_parent_interface }}:
+      dhcp4: false
+      dhcp6: false
+      optional: true
+
+  vlans:
+    {{ zeek_capture_interface }}:
+      id: {{ zeek_vlan_id }}
+      link: {{ zeek_parent_interface }}
+      dhcp4: false
+      dhcp6: false
+      optional: true

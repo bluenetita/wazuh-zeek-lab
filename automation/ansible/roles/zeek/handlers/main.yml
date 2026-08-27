@@ -1,0 +1,5 @@
+---
+- name: Restart Zeek
+  ansible.builtin.systemd_service:
+    name: zeek.service
+    state: restarted

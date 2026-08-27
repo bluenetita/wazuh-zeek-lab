@@ -1,0 +1,44 @@
+---
+# ---------------------------------------------------------
+# Verifica che sia stata configurata una password
+# per l'utente della VM.
+# ---------------------------------------------------------
+- name: Check hardening user password
+  ansible.builtin.assert:
+    that:
+      - hardening_user_password_hash | default('') | length > 0
+    fail_msg: >
+      No password hash has been configured for {{ hardening_user }}.
+
+# ---------------------------------------------------------
+# Imposta la password dell'utente utilizzato per
+# amministrare la VM.
+# ---------------------------------------------------------
+- name: Set hardening user password
+  ansible.builtin.user:
+    name: "{{ hardening_user }}"
+    password: "{{ hardening_user_password_hash }}"
+    update_password: always
+  no_log: true
+
+# ---------------------------------------------------------
+# Rimuove NOPASSWD dalla regola sudo dell'utente.
+#
+# Prima:
+#   prova ALL=(ALL) NOPASSWD:ALL
+#
+# Dopo:
+#   prova ALL=(ALL) ALL
+#
+# Il nome utente viene ricavato automaticamente
+# da ansible_user.
+# ---------------------------------------------------------
+- name: Require password for sudo
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/90-cloud-init-users
+    regexp: '^{{ hardening_user }}\s+ALL='
+    line: '{{ hardening_user }} ALL=(ALL) ALL'
+    owner: root
+    group: root
+    mode: "0440"
+    validate: '/usr/sbin/visudo -cf %s'

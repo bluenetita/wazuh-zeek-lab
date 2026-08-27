@@ -1,0 +1,100 @@
+---
+- name: Install Wazuh repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - net-tools
+    state: present
+    update_cache: true
+
+- name: Download Wazuh GPG key
+  ansible.builtin.get_url:
+    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    dest: /tmp/GPG-KEY-WAZUH
+    mode: "0644"
+
+- name: Import Wazuh GPG key
+  ansible.builtin.command:
+    cmd: >-
+      gpg --no-default-keyring
+      --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg
+      --import /tmp/GPG-KEY-WAZUH
+  args:
+    creates: /usr/share/keyrings/wazuh.gpg
+
+- name: Set Wazuh key permissions
+  ansible.builtin.file:
+    path: /usr/share/keyrings/wazuh.gpg
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add Wazuh APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main"
+    filename: wazuh
+    state: present
+    update_cache: true
+
+- name: Install Wazuh Agent
+  ansible.builtin.apt:
+    name: "{{ ('wazuh-agent=' ~ wazuh_agent_version) if (wazuh_agent_version | length > 0) else 'wazuh-agent' }}"
+    state: present
+    update_cache: true
+
+- name: Check Wazuh Agent configuration template
+  ansible.builtin.assert:
+    that:
+      - wazuh_agent_config_template | default('') | length > 0
+    fail_msg: >
+      No Wazuh Agent configuration template has been defined
+      for {{ inventory_hostname }}.
+
+- name: Configure Wazuh Agent
+  ansible.builtin.template:
+    src: "{{ wazuh_agent_config_template }}"
+    dest: /var/ossec/etc/ossec.conf
+    owner: root
+    group: wazuh
+    mode: "0660"
+  notify: Restart Wazuh Agent
+
+- name: Remove enrollment password reference when no password is configured
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '^\s*<authorization_pass_path>etc/authd\.pass</authorization_pass_path>\s*$\n?'
+    replace: ''
+  when: wazuh_enrollment_password | length == 0
+  notify: Restart Wazuh Agent
+
+- name: Install enrollment password
+  ansible.builtin.copy:
+    dest: /var/ossec/etc/authd.pass
+    content: "{{ wazuh_enrollment_password }}\n"
+    owner: root
+    group: wazuh
+    mode: "0640"
+  when: wazuh_enrollment_password | length > 0
+  no_log: true
+  notify: Restart Wazuh Agent
+
+- name: Remove enrollment password file when unused
+  ansible.builtin.file:
+    path: /var/ossec/etc/authd.pass
+    state: absent
+  when: wazuh_enrollment_password | length == 0
+  notify: Restart Wazuh Agent
+
+- name: Hold Wazuh Agent package
+  ansible.builtin.dpkg_selections:
+    name: wazuh-agent
+    selection: hold
+  when: wazuh_agent_hold_package
+
+- name: Enable and start Wazuh Agent
+  ansible.builtin.systemd_service:
+    name: wazuh-agent
+    enabled: true
+    state: started

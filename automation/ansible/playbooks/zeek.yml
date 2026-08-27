@@ -1,0 +1,27 @@
+---
+- name: Configure Zeek sensor
+  hosts: zeek_sensors
+  become: true
+
+  roles:
+    - role: zeek
+    - role: wazuh_agent
+
+  tasks:
+
+    - name: Check Zeek configuration
+      ansible.builtin.command:
+        cmd: /opt/zeek/bin/zeekctl check
+      changed_when: false
+
+    - name: Enable and start Zeek
+      ansible.builtin.systemd_service:
+        name: zeek.service
+        enabled: true
+        state: started
+
+  post_tasks:
+
+    - name: Apply final VM hardening
+      ansible.builtin.include_role:
+        name: hardening

@@ -1,0 +1,97 @@
+# =============================================================================
+# Terraform
+# =============================================================================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Keep the provider lock file under version control.
+# Do NOT ignore .terraform.lock.hcl
+
+# =============================================================================
+# Ansible
+# =============================================================================
+*.retry
+.ansible/
+
+# Vault password files - encrypted vault.yml files are intentionally NOT ignored.
+.vault_pass
+.vault-password
+vault-password
+vault-password.txt
+vault_pass.txt
+
+# =============================================================================
+# Zeek local binary artifacts
+# =============================================================================
+# The precompiled artifact is large and should be distributed separately.
+ansible/artifacts/**/*.tar.gz
+ansible/artifacts/**/*.tgz
+ansible/artifacts/**/*.zip
+
+# Keep checksum files such as *.sha256 under version control.
+
+# =============================================================================
+# SSH keys and local SSH state
+# =============================================================================
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.pem
+*.key
+*.ppk
+known_hosts
+known_hosts.old
+
+# =============================================================================
+# Wazuh secrets / runtime identity material
+# =============================================================================
+authd.pass
+client.keys
+
+# =============================================================================
+# Environment files and credentials
+# =============================================================================
+.env
+.env.*
+!.env.example
+
+# =============================================================================
+# Logs, temporary files and backups
+# =============================================================================
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# IDE / OS metadata
+# =============================================================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =============================================================================
+# Python cache (helper scripts, if added later)
+# =============================================================================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
