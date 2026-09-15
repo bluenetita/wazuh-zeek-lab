@@ -2,38 +2,19 @@
 
 This directory contains controlled validation scenarios for the monitoring and response architecture.
 
-| Scenario | Main telemetry | Main validation goal |
+| Scenario | Main telemetry | Validation goal |
 |---|---|---|
-| [`reverse-shell/`](reverse-shell/) | Zeek custom logs, Auditd connection events, Wazuh correlation, Active Response | Correlate network and endpoint evidence and test containment |
-| [`privilege-escalation/`](privilege-escalation/) | Auditd keys, Wazuh privilege rules, FIM and system context | Detect privileged and post-exploitation command execution |
-| [`data-exfiltration/`](data-exfiltration/) | Zeek outbound-volume baseline, custom JSON log, Wazuh rules `100913` and `100914` | Detect an authorized high-volume transfer that exceeds the learned threshold |
+| `reverse-shell/` | Zeek, Auditd, Wazuh correlation, Active Response | Correlate network/endpoint evidence and test containment |
+| `privilege-escalation/` | Auditd keys, Wazuh privilege rules, FIM/system context | Detect privileged/post-exploitation execution |
+| `data-exfiltration/` | Zeek baseline/custom JSON and Wazuh rules | Detect an authorized volume anomaly |
+| `network-scanning/` | Zeek scanning JSON and Wazuh `100915-100919` | Detect several scan patterns |
+| `apparmor-mitigation/` | AppArmor Audit events and Wazuh `1309xx` rules | Compare complain/enforce behavior |
+| `command-injection/` | ServerDB AppArmor/Audit effects | Demonstrate defensive visibility around the intentionally unsafe service |
+| `full-attack-chain/` | Multiple sources | Document the end-to-end defensive coverage and gaps |
+| `pivoting-ssh-bruteforce/` | Current coverage gap | Document later-stage activity without claiming a dedicated custom detector |
 
-Each scenario should define:
-
-- objective and scope;
-- involved systems;
-- prerequisites;
-- safe controlled actions;
-- expected telemetry;
-- relevant decoder and rule IDs;
-- result interpretation;
-- response behavior, when implemented;
-- cleanup;
-- limitations;
-- sanitized evidence references.
+Each scenario should define objective, systems, prerequisites, safe descriptive actions, expected telemetry, decoder/rule IDs, interpretation, cleanup, limitations, and sanitized evidence.
 
 ## Safety
 
-The scenarios are intended for the isolated laboratory and authorized testing only.
-
-Do not commit or publish:
-
-- weaponized payloads;
-- malware;
-- credentials or private keys;
-- real confidential data;
-- complete packet captures;
-- complete unredacted logs;
-- reusable offensive instructions intended for unauthorized systems.
-
-Use benign test files, authorized endpoints, and reduced evidence that demonstrates defensive visibility without exposing sensitive content.
+Do not publish weaponized payloads, credentials, private keys, raw logs, full PCAPs, malicious binaries, signed webhooks, or reusable offensive command sequences. Keep operational attack commands in private lab notes when necessary for authorized testing.

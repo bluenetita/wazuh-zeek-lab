@@ -1,7 +1,7 @@
-# Red-Team Test Components
+# Red-Team Notes
 
-This directory documents the controlled attacker-side environment used to validate defensive visibility.
+This public repository keeps only sanitized, high-level descriptions of attacker-side actions needed to explain defensive validation.
 
-It must not contain weaponized payloads, malware, credentials, persistence code, or instructions intended for unauthorized systems.
+Exact exploitation payloads, credential-guessing commands, pivot/port-forward command lines, wordlists, malicious binaries, and reusable offensive command sequences are intentionally excluded from the public patch.
 
-The focus is reproducibility of benign laboratory traffic, host/network placement, expected observations, and safe cleanup.
+Keep any necessary operational commands in a separate private lab notebook tied to the authorized environment.

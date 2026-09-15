@@ -1,0 +1,5 @@
+{"ts":1788507032.367933,"event_type":"host_scan","src_ip":"10.3.20.2","scanner_mac":"bc:24:11:da:1c:99","target_count":20,"scan_window":"1.0 min","protocol":"ARP","note":"Possible ARP host scanning detected."}
+{"ts":1788507103.964214,"event_type":"port_scan","src_ip":"10.3.20.2","target_ip":"10.3.20.4","unique_ports":100,"scan_window":"1.0 min","protocol":"TCP","note":"Possible TCP port scanning detected."}
+{"ts":1788341660.984470,"event_type":"udp_port_scan","src_ip":"10.3.20.2","target_ip":"10.3.20.4","unique_ports":50,"scan_window":"1.0 min","protocol":"UDP","note":"Possible UDP port scanning detected."}
+{"ts":1789430403.680733,"event_type":"address_scan","src_ip":"10.3.10.3","target_port":{"port":443,"proto":"tcp"},"target_count":2,"scan_window":"1.0 min","protocol":"TCP","note":"Possible TCP address scanning detected."}
+{"ts":1788886439.180006,"event_type":"icmp_host_scan","src_ip":"10.3.20.2","target_count":2,"scan_window":"1.0 min","protocol":"ICMP","note":"Possible ICMP host scanning detected."}

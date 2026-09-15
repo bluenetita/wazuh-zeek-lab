@@ -2,90 +2,113 @@
 
 ## Recommended order
 
-1. Deploy the Proxmox bridges and VLANs.
-2. Configure pfSense and RouterOS routing/firewall policy.
+1. Deploy Proxmox bridges and VLANs.
+2. Configure pfSense/RouterOS routing and firewall policy.
 3. Configure the OVS mirror and VLAN 999 capture path.
-4. Install and configure ZeekVM.
-5. Install Wazuh agents on ZeekVM and ClientVM.
-6. Install Auditd rules on ClientVM.
-7. Install custom Wazuh decoders and rules on the manager.
-8. Validate individual events with `wazuh-logtest`.
-9. Install Active Response scripts and runtime configuration.
-10. Run controlled scenario tests and collect sanitized evidence.
+4. Install/configure ZeekVM and verify mirrored traffic.
+5. Deploy the custom reverse-shell, data-exfiltration, and scanning scripts.
+6. Install Wazuh agents on ZeekVM, ClientVM, and ServerDB.
+7. Install Auditd rules on ClientVM.
+8. Install the ServerDB AppArmor profile in complain mode for initial observation.
+9. Install custom Wazuh decoders and rules on the manager.
+10. Validate individual events before testing correlations.
+11. Validate AppArmor enforce mode only after required service behavior is understood.
+12. Run controlled scenarios and retain only sanitized evidence in Git.
 
-## Zeek
+## Zeek scanning package
 
-Deploy files from [`blue-team/zeek/`](../blue-team/zeek/) to the appropriate Zeek paths. Validate configuration before restart:
+Copy the scanning package to the Zeek site directory so the structure is equivalent to:
+
+```text
+/opt/zeek/share/zeek/site/custom_scripts/scanning/
+  __load__.zeek
+  logging.zeek
+  host_scan.zeek
+  port_scan.zeek
+  address_scan.zeek
+  udp_scan.zeek
+  icmp_scan.zeek
+```
+
+Ensure `local.zeek` loads the package:
+
+```zeek
+@load custom_scripts/scanning
+```
+
+Validate and deploy:
 
 ```bash
 sudo /opt/zeek/bin/zeekctl check
 sudo /opt/zeek/bin/zeekctl deploy
 ```
 
-## Auditd
+Confirm that `/var/log/zeek-custom/scanning.log` can be created/written by the Zeek process and read by the Wazuh Agent.
 
-Copy rules from [`blue-team/auditd/rules.d/`](../blue-team/auditd/rules.d/) to `/etc/audit/rules.d/`, then load and verify them:
+## Wazuh agent collection
+
+The ZeekVM agent must collect `/var/log/zeek-custom/scanning.log` as JSON. The ServerDB agent must collect `/var/log/audit/audit.log` using the Audit log format.
+
+After updating an agent configuration, restart the corresponding Wazuh Agent and verify `/var/ossec/logs/ossec.log`.
+
+## AppArmor on ServerDB
+
+Install the profile at:
+
+```text
+/etc/apparmor.d/opt.inventario_service.inventario_c
+```
+
+Reload it after edits:
 
 ```bash
-sudo augenrules --load
-sudo auditctl -l
+sudo apparmor_parser -r /etc/apparmor.d/opt.inventario_service.inventario_c
 ```
+
+Verify status with:
+
+```bash
+sudo aa-status
+```
+
+Use complain mode while observing required service behavior, then test enforce mode in the isolated lab. Do not assume that commented `deny` examples are active policy.
 
 ## Wazuh Manager
 
-Copy custom decoders and rules to:
+Copy the custom decoder/rule files into the manager's configured custom directories, normally:
 
 ```text
 /var/ossec/etc/decoders/
 /var/ossec/etc/rules/
 ```
 
-Validate and restart:
+Validate before restart:
 
 ```bash
 sudo /var/ossec/bin/wazuh-analysisd -t
-sudo systemctl restart wazuh-manager
+sudo /var/ossec/bin/wazuh-logtest
 ```
 
-## Active Response
+The existing manager configuration already loads `etc/decoders` and `etc/rules`, so the scanning/AppArmor additions do not require a new manager `<rule_dir>` or `<decoder_dir>` entry.
 
-Deploy:
+## Validation order
 
-```text
-collect_reverse_shell_evidence.sh -> ClientVM /var/ossec/active-response/bin/
-routeros_quarantine.py           -> Manager  /var/ossec/active-response/bin/
-routeros.conf                     -> Manager  /etc/wazuh-routeros/
-```
+Validate the new functionality in this order:
 
-Keep the SSH private key and real runtime configuration outside Git.
+1. each Zeek scanning event type appears in `scanning.log`;
+2. Wazuh rules `100915-100919` match the corresponding event types;
+3. a prior reverse-shell correlation followed by scanning triggers one of `120927-120934` with the same `src_ip`;
+4. an AppArmor denial is decoded as `apparmor_audit`;
+5. base AppArmor rule `130900` triggers;
+6. specialized rules such as execution/file/network/capability rules trigger only when their required fields are present;
+7. repeated-denial rules are tested separately from one-shot events.
 
-## Data-exfiltration validation
+## Publication checks
 
-The custom Zeek detector requires a learning phase before it can generate anomaly alerts.
+Before committing:
 
-1. Confirm that `data_exfiltration.zeek` is loaded.
-2. Generate representative authorized outbound TCP traffic for at least five one-minute windows.
-3. Confirm `baseline_completed` and Wazuh rule `100913`.
-4. Generate a benign authorized transfer that exceeds the learned threshold.
-5. Confirm `possible_data_exfiltration` and Wazuh rule `100914`.
-
-Monitor:
-
-```bash
-sudo tail -f /var/log/zeek-custom/data_exfiltration.log
-```
-
-See [`scenarios/data-exfiltration/`](../scenarios/data-exfiltration/) for the complete controlled procedure and limitations.
-
-## Final validation
-
-Confirm:
-
-- Zeek receives mirrored packets;
-- custom logs are created;
-- Wazuh receives both agents;
-- Auditd keys appear in events;
-- decoder fields are populated;
-- correlation rules trigger in the expected order;
-- evidence archives are created;
-- RouterOS receives the victim address and terminates active connections.
+- do not add the compiled `inventario_c` binary;
+- do not add `audit.log`, `scanning.log`, or rotated `.gz` archives;
+- do not add signed webhook URLs, credentials, keys, `client.keys`, or `authd.pass`;
+- keep only reduced/sanitized evidence samples;
+- review `git diff` for accidental secrets.

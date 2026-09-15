@@ -1,0 +1,261 @@
+<group name="apparmor,custom,">
+
+  <!-- ========================================================= -->
+  <!-- BASE RULE                                                -->
+  <!-- ========================================================= -->
+
+  <!-- Any AppArmor denial -->
+  <rule id="130900" level="5">
+    <decoded_as>apparmor_audit</decoded_as>
+    <field name="apparmor.event">^DENIED$</field>
+    <description>AppArmor: operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,access_denied,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- FILE ACCESS                                              -->
+  <!-- ========================================================= -->
+
+  <!-- Read denied -->
+  <rule id="130910" level="7">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^file$</field>
+    <field name="apparmor.denied" type="pcre2">r</field>
+    <description>AppArmor: file read denied for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,file_access,read_denied,</group>
+  </rule>
+
+  <!-- Write / append / create denied -->
+  <rule id="130911" level="7">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^file$</field>
+    <field name="apparmor.denied" type="pcre2">[wac]</field>
+    <description>AppArmor: file modification denied for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,file_access,write_denied,</group>
+  </rule>
+
+  <!-- Executable denied -->
+  <rule id="130912" level="8">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.operation">^exec$</field>
+    <field name="apparmor.denied" type="pcre2">x</field>
+    <description>AppArmor: executable denied for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,execution_denied,</group>
+  </rule>
+
+  <!-- Executable memory mapping denied -->
+  <rule id="130913" level="6">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^file$</field>
+    <field name="apparmor.denied" type="pcre2">m</field>
+    <description>AppArmor: executable memory mapping denied for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,file_access,mmap_denied,</group>
+  </rule>
+
+  <!-- File lock / hard-link operation denied -->
+  <rule id="130914" level="6">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^file$</field>
+    <field name="apparmor.denied" type="pcre2">[kl]</field>
+    <description>AppArmor: file lock or link operation denied for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,file_access,file_operation_denied,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- EXECUTION: HIGHER-RISK SUBCATEGORIES                     -->
+  <!-- ========================================================= -->
+
+  <!-- Shell execution -->
+  <rule id="130920" level="12">
+    <if_sid>130912</if_sid>
+    <field name="apparmor.name" type="pcre2">^/(?:usr/)?bin/(?:sh|bash|dash|zsh|ksh|fish)$</field>
+    <description>AppArmor: shell execution blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,execution_denied,shell_execution,possible_compromise,</group>
+  </rule>
+
+  <!-- Privilege-management tools -->
+  <rule id="130921" level="11">
+    <if_sid>130912</if_sid>
+    <field name="apparmor.name" type="pcre2">^/(?:usr/)?bin/(?:sudo|su|pkexec|doas)$</field>
+    <description>AppArmor: privilege-management tool execution blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,execution_denied,privilege_escalation,</group>
+  </rule>
+
+  <!-- Scripting interpreters -->
+  <rule id="130922" level="9">
+    <if_sid>130912</if_sid>
+    <field name="apparmor.name" type="pcre2">^/(?:usr/)?bin/(?:python[0-9.]*|perl|ruby|php[0-9.]*|node|lua)$</field>
+    <description>AppArmor: script interpreter execution blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,execution_denied,interpreter_execution,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- CAPABILITIES                                             -->
+  <!-- ========================================================= -->
+
+  <!-- Generic capability denial -->
+  <rule id="130930" level="8">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.operation">^capable$</field>
+    <field name="apparmor.object_class">^cap$</field>
+    <description>AppArmor: Linux capability denied for profile $(apparmor.profile).</description>
+    <group>apparmor,capability_denied,</group>
+  </rule>
+
+  <!-- High-risk capabilities -->
+  <rule id="130931" level="11">
+    <if_sid>130930</if_sid>
+    <match type="pcre2">capname="(?:sys_admin|sys_module|sys_ptrace|dac_override|dac_read_search|setuid|setgid|net_admin|sys_chroot|mknod)"</match>
+    <description>AppArmor: high-risk Linux capability blocked for profile $(apparmor.profile).</description>
+    <group>apparmor,capability_denied,high_risk_capability,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- NETWORK                                                  -->
+  <!-- ========================================================= -->
+
+  <!-- Generic network denial -->
+  <rule id="130940" level="8">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^net$</field>
+    <description>AppArmor: network operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,network_denied,</group>
+  </rule>
+
+  <!-- Raw socket -->
+  <rule id="130941" level="10">
+    <if_sid>130940</if_sid>
+    <match type="pcre2">sock_type="raw"</match>
+    <description>AppArmor: raw network socket operation blocked for profile $(apparmor.profile).</description>
+    <group>apparmor,network_denied,raw_socket,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- OTHER APPARMOR CLASSES                                   -->
+  <!-- ========================================================= -->
+
+  <!-- ptrace -->
+  <rule id="130950" level="11">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^ptrace$</field>
+    <description>AppArmor: ptrace operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,ptrace_denied,process_access,</group>
+  </rule>
+
+  <!-- Mount -->
+  <rule id="130951" level="10">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^mount$</field>
+    <description>AppArmor: mount operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,mount_denied,</group>
+  </rule>
+
+  <!-- Signal -->
+  <rule id="130952" level="7">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^signal$</field>
+    <description>AppArmor: signal operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,signal_denied,process_access,</group>
+  </rule>
+
+  <!-- D-Bus -->
+  <rule id="130953" level="7">
+    <if_sid>130900</if_sid>
+    <field name="apparmor.object_class">^dbus$</field>
+    <description>AppArmor: D-Bus operation denied for profile $(apparmor.profile).</description>
+    <group>apparmor,dbus_denied,ipc_denied,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- HIGH-VALUE FILES                                         -->
+  <!-- ========================================================= -->
+
+  <!-- Sensitive system files -->
+  <rule id="130960" level="10">
+    <if_sid>130910</if_sid>
+    <field name="apparmor.name" type="pcre2">^/(?:etc/(?:shadow|gshadow|sudoers|sudoers\.d/.*)|root/\.ssh/.*)$</field>
+    <description>AppArmor: access to sensitive system data blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,read_denied,sensitive_data,credential_access,</group>
+  </rule>
+
+  <!-- SSH private keys -->
+  <rule id="130961" level="11">
+    <if_sid>130910</if_sid>
+    <field name="apparmor.name" type="pcre2">^/home/[^/]+/\.ssh/(?:id_rsa|id_dsa|id_ecdsa|id_ed25519)(?:\.pub)?$</field>
+    <description>AppArmor: SSH key access blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,read_denied,credential_access,ssh_keys,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- HIGH-VALUE WRITE TARGETS                                 -->
+  <!-- ========================================================= -->
+
+  <!-- Modification under /etc -->
+  <rule id="130962" level="10">
+    <if_sid>130911</if_sid>
+    <field name="apparmor.name" type="pcre2">^/etc/</field>
+    <description>AppArmor: modification of system configuration blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,write_denied,system_configuration,</group>
+  </rule>
+
+  <!-- Persistence-related locations -->
+  <rule id="130963" level="12">
+    <if_sid>130911</if_sid>
+    <field name="apparmor.name" type="pcre2">^(?:/etc/systemd/system/|/usr/lib/systemd/system/|/etc/cron(?:\.|/)|/var/spool/cron/|/root/\.ssh/authorized_keys$|/home/[^/]+/\.ssh/authorized_keys$)</field>
+    <description>AppArmor: modification of persistence-related file blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,write_denied,persistence,possible_compromise,</group>
+  </rule>
+
+  <!-- Security monitoring files -->
+  <rule id="130964" level="12">
+    <if_sid>130911</if_sid>
+    <field name="apparmor.name" type="pcre2">^(?:/var/log/audit/|/var/ossec/)</field>
+    <description>AppArmor: modification of security monitoring data blocked for profile $(apparmor.profile): $(apparmor.name).</description>
+    <group>apparmor,write_denied,defense_evasion,security_tools,</group>
+  </rule>
+
+
+  <!-- ========================================================= -->
+  <!-- CORRELATION / REPEATED ACTIVITY                           -->
+  <!-- ========================================================= -->
+
+  <!-- Multiple AppArmor denials from same profile -->
+  <rule id="130980" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>130900</if_matched_sid>
+    <same_field>apparmor.profile</same_field>
+    <description>AppArmor: multiple denied operations from the same profile within 60 seconds: $(apparmor.profile).</description>
+    <group>apparmor,multiple_denials,possible_compromise,</group>
+  </rule>
+
+  <!-- Repeated executable launches -->
+  <rule id="130981" level="12" frequency="3" timeframe="60">
+    <if_matched_sid>130912</if_matched_sid>
+    <same_field>apparmor.profile</same_field>
+    <description>AppArmor: repeated denied executable launches from profile $(apparmor.profile).</description>
+    <group>apparmor,execution_denied,repeated_execution,possible_compromise,</group>
+  </rule>
+
+  <!-- Repeated network denials -->
+  <rule id="130982" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>130940</if_matched_sid>
+    <same_field>apparmor.profile</same_field>
+    <description>AppArmor: repeated denied network operations from profile $(apparmor.profile).</description>
+    <group>apparmor,network_denied,repeated_network_activity,</group>
+  </rule>
+
+  <!-- Repeated capability denials -->
+  <rule id="130983" level="11" frequency="5" timeframe="60">
+    <if_matched_sid>130930</if_matched_sid>
+    <same_field>apparmor.profile</same_field>
+    <description>AppArmor: repeated denied Linux capability operations from profile $(apparmor.profile).</description>
+    <group>apparmor,capability_denied,repeated_privileged_operation,</group>
+  </rule>
+
+</group>

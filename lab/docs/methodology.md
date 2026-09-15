@@ -1,54 +1,60 @@
 # Methodology
 
-## Approach
+## Evidence-driven workflow
 
-The laboratory follows an evidence-driven workflow:
+The laboratory follows a repeatable detection-engineering process:
 
-1. define a controlled security scenario;
-2. identify expected network and endpoint observations;
-3. collect raw telemetry;
-4. implement decoders and low-level rules;
-5. correlate independent evidence sources;
-6. validate false-positive controls;
-7. test response actions;
-8. preserve reduced, sanitized evidence;
-9. document limitations and reproducibility requirements.
+1. define an authorized scenario and expected behavior;
+2. identify the required network and endpoint observations;
+3. collect raw telemetry privately;
+4. implement parsers/decoders and low-level rules;
+5. correlate independent or temporally related evidence;
+6. tune thresholds and exclusions;
+7. validate defensive controls and response behavior;
+8. preserve only reduced/sanitized evidence for publication;
+9. document limitations, false positives, and reproducibility requirements.
 
 ## Detection design principles
 
 ### Separate observation from conclusion
 
-A single connection, download, SUID execution, or traffic spike is not automatically malicious. Lower-level rules describe observations; higher-level correlation rules represent stronger conclusions.
+A single connection, scan-like pattern, download, privileged execution, AppArmor denial, or traffic-volume spike is not automatically malicious. Lower-level rules describe observations; correlation and context produce stronger conclusions.
 
-### Prefer independent evidence
+### Prefer independent evidence when available
 
-Reverse-shell confidence increases when Zeek network behavior agrees with an Auditd process connection from the target endpoint.
+Reverse-shell confidence increases when Zeek network behavior agrees with Auditd connection/process context. Post-compromise scanning confidence increases when scanning follows an earlier compromise signal from the same host.
 
-### Preserve event order alternatives
+### Treat thresholds as environment-specific
 
-Network and endpoint events may reach Wazuh in different orders. Correlation chains therefore support alternative sequences when required.
+The scanning package deliberately uses low thresholds for `address_scan` and `icmp_host_scan` in the current laboratory validation configuration. These values are useful for tests but can be noisy in a continuously monitored network.
 
-### Use controlled exclusions
+### Preserve schema consistency
 
-Known local services, loopback addresses, expected DNS traffic, and approved destinations are excluded only when the exclusion is justified and documented.
+The current scanning schema uses `src_ip` as the scanner-source field. Older test logs that used `scanner_ip` must not be mixed into current correlation tests without normalization.
 
-## Validation
+### Distinguish prevention from detection
+
+AppArmor complain mode provides visibility without enforcing the policy. Enforce mode blocks operations not granted by the loaded profile. Wazuh reports the AppArmor decision; it does not itself enforce the application policy.
+
+## Scenario validation record
 
 Each scenario should record:
 
-- test date and environment state;
-- source and target hosts;
-- commands or actions at a safe descriptive level;
-- expected Zeek, Auditd, and Wazuh events;
-- actual rule IDs and alert levels;
-- response result;
-- false positives and visibility gaps;
-- sanitized evidence references.
+- date/environment state;
+- participating systems;
+- defensive objective;
+- expected Zeek/Auditd/AppArmor/Wazuh events;
+- decoder and rule IDs;
+- actual alert levels;
+- false positives and tuning decisions;
+- response result, when applicable;
+- sanitized evidence references;
+- known observability gaps.
 
 ## Evidence handling
 
-Do not publish complete logs or archives. Extract only the fields required to demonstrate the result and replace real values with placeholders where appropriate.
+Raw evidence may be retained privately for engineering and troubleshooting, but the public repository should contain only the minimum fields required to demonstrate a result. Do not publish complete Auditd logs, rotated scanning archives, full PCAPs, credentials, signed webhooks, or volatile response archives.
 
 ## Change control
 
-Changes to schemas, decoder fields, Auditd keys, paths, rule IDs, network interfaces, or RouterOS list names must be reflected across configuration, scenario documentation, and evidence notes.
+Changes to event schemas, decoder fields, Auditd keys, AppArmor profiles, custom-log paths, rule IDs, network interfaces, IP addresses, thresholds, or RouterOS list names must be reflected across configuration, documentation, scenarios, and evidence notes.

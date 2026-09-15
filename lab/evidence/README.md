@@ -1,22 +1,15 @@
 # Sanitized Evidence
 
-This directory contains reduced artifacts that demonstrate validated results without exposing complete logs, packet captures, payloads, credentials, or personal data.
-
-## Scenario directories
+This directory contains reduced artifacts that demonstrate validated results without exposing complete logs, packet captures, payloads, credentials, signed webhooks, or personal data.
 
 | Path | Purpose |
 |---|---|
-| [`reverse-shell/`](reverse-shell/) | Zeek, Wazuh, correlation, and containment evidence |
-| [`privilege-escalation/`](privilege-escalation/) | Auditd and Wazuh privileged-execution evidence |
-| [`data-exfiltration/`](data-exfiltration/) | Baseline, threshold-exceedance, and Wazuh alert evidence |
+| `reverse-shell/` | Existing Zeek/Wazuh/correlation/containment evidence |
+| `privilege-escalation/` | Existing Auditd/Wazuh privileged-execution evidence |
+| `data-exfiltration/` | Existing baseline/threshold-exceedance evidence |
+| `scanning/` | Reduced samples for the five current scanning event types |
+| `apparmor/` | Reduced AppArmor denial evidence |
 
-Evidence should include:
+Evidence should include only the relevant fields, the expected decoder/rule, and an explanation of what the artifact demonstrates.
 
-- source and scenario;
-- timestamp placeholder or controlled test timestamp;
-- relevant fields only;
-- expected rule or decoder;
-- explanation of what the artifact proves;
-- reference to the scenario documentation.
-
-Do not commit Active Response archives, complete `alerts.json`, complete Auditd logs, PCAPs, transferred test data, or live RouterOS state.
+Do not commit Active Response archives, complete `alerts.json`, complete Auditd logs, rotated Zeek archives, PCAPs, transferred test data, or live RouterOS state.

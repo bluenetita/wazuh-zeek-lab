@@ -1,0 +1,15 @@
+[Unit]
+Description=Servizio Inventario Testuale Vulnerabile
+After=network.target
+
+[Service]
+Type=simple
+User=inv-user
+WorkingDirectory=/opt/inventario_service
+ExecStart=/opt/inventario_service/inventario_c
+Restart=always
+# Allow the dedicated inv-user service to bind TCP port 80 without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+#include <tunables/global>
+
+/opt/inventario_service/inventario_c flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Permessi di rete essenziali per il socket
+  network inet stream,
+  network inet6 stream,
+
+  # Permessi di lettura per i file di configurazione e lo script stesso
+  /opt/inventario_service/inventario_c r,
+  /opt/inventario_service/utenti.txt r,
+  /opt/inventario_service/products/ r,
+  /opt/inventario_service/products/** rw,
+
+  # =========================================================================
+  # IL BLOCCO DELLA COMMAND INJECTION
+  # AppArmor blocca il tentativo di fare ereditare ed eseguire sub-shell
+  # =========================================================================
+  #deny /bin/sh x,
+  #deny /bin/bash x,
+  #deny /bin/dash x,
+  #deny /bin/** x,
+  #deny /usr/bin/** x,
+
+  # Protezione del file system
+  #deny /etc/passwd r,
+  #deny /etc/shadow r,
+  #deny /etc/** r,
+}

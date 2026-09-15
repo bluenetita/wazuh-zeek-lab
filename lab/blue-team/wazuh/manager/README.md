@@ -1,36 +1,15 @@
 # Wazuh Manager Configuration
 
-This directory contains a sanitized copy of the manager configuration:
+The manager loads the custom decoder and rule directories already present in the project. The scanning/AppArmor update therefore does not require an additional `<decoder_dir>` or `<rule_dir>` entry when the existing manager configuration is retained.
+
+## New files loaded by the existing ruleset directories
 
 ```text
-ossec.conf -> /var/ossec/etc/ossec.conf
+etc/decoders/001_apparmor_decoder.xml
+etc/rules/002_zeek_rules_custom.xml
+etc/rules/005_zeek_scanning_correlation.xml
+etc/rules/006_app_armor.xml
 ```
-
-## Main functions
-
-- receives secure agent traffic on TCP 1514;
-- supports agent enrollment on TCP 1515;
-- loads default and custom decoders/rules;
-- enables inventory, SCA, FIM, rootcheck, and vulnerability detection;
-- collects manager-local logs;
-- defines standard and custom Active Response commands;
-- optionally forwards alerts to a custom Teams/Power Automate integration.
-
-## Custom components
-
-The configuration references:
-
-- `collect_reverse_shell_evidence.sh`;
-- `routeros_quarantine.py`;
-- custom decoder directory `etc/decoders`;
-- custom rule directory `etc/rules`;
-- `/var/ossec/logs/active-responses.log`.
-
-The Power Automate URL is intentionally replaced with `POWER_AUTOMATE_WEBHOOK_URL_REDACTED`.
-
-## Important review point
-
-The current evidence-collection Active Response is configured as a timed response sent to `all` agents, while the script is a one-shot collector and does not implement a delete/rollback action. Review this block before reuse and target the intended ClientVM explicitly.
 
 ## Validation
 
@@ -41,4 +20,10 @@ sudo systemctl restart wazuh-manager
 sudo systemctl status wazuh-manager --no-pager
 ```
 
-Do not commit certificates, private keys, `client.keys`, `authd.pass`, RouterOS runtime configuration, or real webhooks.
+## Secret handling
+
+The public repository must contain only a placeholder for any Teams/Power Automate webhook. A signed workflow URL is a credential-like secret and should be stored outside Git. Do not commit certificates, private keys, `client.keys`, `authd.pass`, RouterOS runtime credentials, or real webhooks.
+
+## Response note
+
+Scanning and AppArmor detections are added as detection/correlation coverage in this update. Do not automatically attach containment actions to every medium-confidence scan or AppArmor denial without a separate response design and validation step.

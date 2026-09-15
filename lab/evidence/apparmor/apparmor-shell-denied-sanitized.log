@@ -1,0 +1,1 @@
+type=AVC msg=audit(1788969859.241:6193): apparmor="DENIED" operation="exec" class="file" profile="/opt/inventario_service/inventario_c" name="/usr/bin/dash" pid=871022 comm="inventario_c" requested_mask="x" denied_mask="x" fsuid=33 ouid=0

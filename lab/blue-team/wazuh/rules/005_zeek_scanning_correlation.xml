@@ -1,0 +1,91 @@
+<group name="zeek_custom,scanning,correlation,">
+
+    <!-- 120901 -> scanning -->
+    <rule id="120927" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120901</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120904 -> scanning -->
+    <rule id="120928" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120904</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120907 -> scanning -->
+    <rule id="120929" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120907</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120910 -> scanning -->
+    <rule id="120930" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120910</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120914 -> scanning -->
+    <rule id="120931" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120914</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120917 -> scanning -->
+    <rule id="120932" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120917</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120921 -> scanning -->
+    <rule id="120933" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120921</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+    <!-- 120924 -> scanning -->
+    <rule id="120934" level="10" frequency="2" timeframe="900">
+        <if_matched_sid>120924</if_matched_sid>
+        <if_group>zeek_scanning</if_group>
+        <same_field>src_ip</same_field>
+
+        <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
+
+        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+    </rule>
+
+</group>
