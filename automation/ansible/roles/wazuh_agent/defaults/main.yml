@@ -1,5 +1,0 @@
----
-wazuh_agent_config_template: ""
-wazuh_agent_version: ""
-wazuh_agent_hold_package: true
-wazuh_enrollment_password: ""

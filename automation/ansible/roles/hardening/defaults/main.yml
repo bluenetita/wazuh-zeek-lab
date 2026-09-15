@@ -1,7 +1,0 @@
----
-# Per default viene protetto l'utente utilizzato da Ansible
-# per collegarsi alla VM.
-hardening_user: "{{ ansible_user }}"
-
-# L'hash reale viene fornito tramite Ansible Vault.
-hardening_user_password_hash: ""
