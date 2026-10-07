@@ -1,56 +1,34 @@
-# AppArmor: serie servicefix, 5 coppie complain/enforce
+# AppArmor: servicefix series, 5 complain/enforce pairs
 
-I timestamp `t0_utc` vanno dal **1 ottobre 2026, 23:08:58.900Z** al
-**1 ottobre 2026, 23:15:12.127Z**: il nome della campagna riporta 20261002,
-ma non sono stati riscritti i timestamp UTC.
+The `t0_utc` timestamps range from **October 1, 2026, 23:08:58.900Z** to **October 1, 2026, 23:15:12.127Z**. The campaign name contains `20261002`, but the original UTC timestamps have not been rewritten.
 
-## Risultati verificati sui file di ciascuna prova
+## Results verified from each run's files
 
-| Condizione | Prove | Decisione per exec di /usr/bin/dash | SYSCALL con stesso audit ID | Servizio active prima/dopo | Main PID invariato | Health-check rc=0 prima/dopo |
+| Condition | Runs | Decision for `/usr/bin/dash` exec | SYSCALL with same audit ID | Service active before/after | Main PID unchanged | Health-check rc=0 before/after |
 |---|---:|---|---|---:|---:|---:|
 | complain | 5 | ALLOWED, 5/5 | success=yes, exit=0, 5/5 | 5/5 | 5/5 | 5/5 |
 | enforce | 5 | DENIED, 5/5 | success=no, exit=-13, 5/5 | 5/5 | 5/5 | 5/5 |
 
-Le 5 prove enforce hanno anche un alert Wazuh `130920` corrispondente all'audit ID
-selezionato. Le due condizioni sono mantenute separate e accoppiate tramite
-`AA-SVCFIX-P01` ... `AA-SVCFIX-P05`. Il confronto riguarda l'operazione osservata,
-non una percentuale generale di efficacia contro qualsiasi attacco.
+All 5 enforce runs also contain a Wazuh `130920` alert corresponding to the selected audit ID. The two conditions are kept separate and paired through `AA-SVCFIX-P01` ... `AA-SVCFIX-P05`. The comparison concerns the observed operation; it is not a general effectiveness percentage against arbitrary attacks.
 
-## Dati inclusi
+## Included data
 
-- [Tabella originale](apparmor_runs.original.tsv): copia della matrice della campagna.
-- [Righe verificate](verified_runs.jsonl): valori estratti dai file runtime per ciascuna prova.
-- [AVC e SYSCALL selezionate](selected_audit_events.log): solo l'evento AppArmor rilevante e la syscall con stesso identificatore audit.
-- [Alert Wazuh ridotti](selected_wazuh_alerts.jsonl): proiezioni degli alert 130920, non un export integrale.
-- [Snapshot della unit](inventario-terminale.service.snapshot.txt).
+- [Original table](apparmor_runs.original.tsv): copy of the campaign matrix.
+- [Verified rows](verified_runs.jsonl): values extracted from runtime files for each run.
+- [Selected AVC and SYSCALL records](selected_audit_events.log): only the relevant AppArmor event and the syscall sharing the same audit identifier.
+- [Reduced Wazuh alerts](selected_wazuh_alerts.jsonl): projections of rule `130920` alerts, not a complete alert export.
+- [Unit snapshot](inventario-terminale.service.snapshot.txt).
 
-La matrice originale ha `service_active_before/after=[SSH password prompt]`:
-si tratta di contaminazione del campo durante la raccolta, **non** dello stato
-systemd. I rispettivi `service_active_*.txt` contengono `active` e i file
-`main_pid_*.txt` permettono il confronto dei PID. I valori corretti sono pubblicati
-nel file derivato, senza alterare silenziosamente la matrice originale.
+The original matrix contains `service_active_before/after=[SSH password prompt]`. This is field contamination introduced during collection, **not** the actual systemd state. The corresponding `service_active_*.txt` files contain `active`, while `main_pid_*.txt` allows the PID comparison. Corrected values are published in the derived file without silently modifying the original matrix.
 
-La colonna originale `syscall_result=not_independently_measured` e la nota
-`independent_outcome_check=not_configured` sono conservate. Le SYSCALL audit gia presenti nelle evidenze permettono di verificare il risultato
-della chiamata di sistema; non sostituiscono un ulteriore test applicativo indipendente.
-Per `AA-C-SVCFIX-03` AVC e SYSCALL sono presenti in `audit_after_marker_poll.txt`,
-non nel file `audit_after_marker_full.log`; il file derivato registra questa differenza.
+The original `syscall_result=not_independently_measured` column and the note `independent_outcome_check=not_configured` are preserved. The audit SYSCALL records already present in the evidence allow verification of the system-call result; they do not replace an additional independent application-level test. For `AA-C-SVCFIX-03`, the AVC and SYSCALL records are present in `audit_after_marker_poll.txt`, not in `audit_after_marker_full.log`; the derived file records this difference.
 
-## Cosa misura il controllo di disponibilita'
+## What the availability check measures
 
-Il comando configurato era `systemctl is-active --quiet inventario-terminale.service`
-seguito da una connessione TCP a `127.0.0.1:80` con timeout 2 s. Quindi il risultato
-conferma **servizio attivo e porta locale raggiungibile**; non certifica la corretta
-esecuzione di una transazione del menu inventario. La continuita' del Main PID e'
-verificata ai due istanti raccolti, non e' un monitoraggio continuo.
+The configured command was `systemctl is-active --quiet inventario-terminale.service` followed by a TCP connection to `127.0.0.1:80` with a 2-second timeout. Therefore, the result confirms **an active service and a reachable local port**; it does not certify successful execution of a full inventory-menu transaction. Main PID continuity is verified at the two collected timestamps, not through continuous monitoring.
 
-## Relazione con sorgente e profilo
+## Relationship with source code and profile
 
-Il [sorgente inventario.c](../../../infrastructure/server-db/inventario-service/inventario.c)
-e il profilo AppArmor incluso rappresentano i componenti dello scenario documentato.
-Le prove finali mostrano il comportamento complain/enforce descritto sopra.
+The [inventory source code](../../../infrastructure/server-db/inventario-service/inventario.c) and the included AppArmor profile represent the components of the documented scenario. The final tests show the complain/enforce behavior summarized above.
 
-La [serie precedente](../2026-10-01-baseline/README.md) non viene sommata a questa:
-mostra PID differenti fra prima e dopo. Usare servicefix per descrivere la continuita'
-del processo osservata nelle prove finali.
-
+The [previous series](../2026-10-01-baseline/README.md) is not aggregated with this one because its before/after PIDs differ. Use the servicefix series when describing process continuity observed in the final tests.

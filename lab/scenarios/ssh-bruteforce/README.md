@@ -1,96 +1,60 @@
-# SSH brute force: normalizzazione endpoint e correlazione multi-host
+# SSH Brute Force: Endpoint Normalization and Multi-Host Correlation
 
-## Obiettivo
+## Objective
 
-Distinguere `A1 -> V1`, `A1 -> V2`, `A2 -> V1` e `A2 -> V2`, evitando che un login
-su un endpoint differente chiuda la catena di un altro endpoint. Il normalizer non
-e' un programma esterno: usa `out_format` nativo dell'agent e decoder XML sul Manager.
+Distinguish `A1 -> V1`, `A1 -> V2`, `A2 -> V1`, and `A2 -> V2`, preventing a login on one endpoint from completing the correlation chain of another endpoint. The normalizer is not an external program: it uses the Wazuh agent's native `out_format` and XML decoders on the Manager.
 
-[Topologia](../../docs/topology-ssh-validation-2026-10.md) -
-[Test](TESTS.md) - [Evidenze](../../evidence/ssh-bruteforce/README.md).
+[Topology](../../docs/topology-ssh-validation-2026-10.md) - [Tests](TESTS.md) - [Evidence](../../evidence/ssh-bruteforce/README.md).
 
-## Percorso endpoint
+## Endpoint path
 
-Sul server SSH, il collector di `/var/log/auth.log` seleziona `sshd` e aggiunge:
+On the SSH server, the `/var/log/auth.log` collector selects `sshd` and appends:
 
 ```xml
 <out_format>$(log) wazuh_dst_ip=$(host_ip)</out_format>
 ```
 
-Il decoder conserva `srcip` ed estrae `dstip`; aggiunge gli alias dinamici `src_ip`
-e `dest_ip`. L'agent ServerDB raccoglie inoltre gli eventi non-SSH da journald per
-non duplicare volontariamente la stessa sorgente SSH. La configurazione effettiva
-va verificata anche in presenza di `agent.conf` centralizzati.
+The decoder retains `srcip`, extracts `dstip`, and adds dynamic aliases `src_ip` and `dest_ip`. The ServerDB agent also collects non-SSH journald events so that the same SSH source is not intentionally duplicated. The effective configuration should also be checked when centralized `agent.conf` files are in use.
 
-`$(host_ip)` e' un indirizzo selezionato dall'agent: non e' la prova dell'indirizzo
-locale effettivo di ogni socket SSH, ne' coincide per definizione con l'IP di
-enrollment. Nei test i valori erano V1 `10.3.30.3` e V2 `10.3.30.4`. Su host
-multi-homed, NAT, alias IP o porte multiple, la semantica va riesaminata.
+`$(host_ip)` is an address selected by the agent. It is not proof of the actual local address of every SSH socket, and it is not necessarily identical to the enrollment IP. During the tests, the values were V1 `10.3.30.3` and V2 `10.3.30.4`. On multihomed hosts, with NAT, IP aliases, or multiple listening addresses, the semantics must be reassessed.
 
-## Percorso rete e risultato unknown
+## Network path and unknown authentication outcome
 
-Lo script mantiene uno stato distinto per `[src, dst, dport]`. `ssh_auth_result`
-tratta gli esiti inferiti dall'analizzatore SSH; `SSH::log_ssh` considera invece le
-sessioni per cui `auth_success` non e' valorizzato. I due percorsi non incrementano
-volontariamente la stessa sessione quando il risultato e' presente.
+The script maintains separate state for `[src, dst, dport]`. `ssh_auth_result` handles authentication outcomes inferred by the SSH analyzer; `SSH::log_ssh` handles sessions where `auth_success` is not populated. The two paths are designed not to increment the same session when an authentication result is present.
 
-Nel fallback: `failed_connections=0`, `unknown_connections=5`, `auth_attempts=0`,
-`auth_success` assente. Questa e' **attivita' SSH ripetuta candidata**, non la prova
-di cinque password sbagliate. La verifica dei fallimenti proviene da `sshd` via Wazuh.
-Anche l'esito auth noto a Zeek resta un'inferenza di rete, non un audit del server.
+In the fallback path: `failed_connections=0`, `unknown_connections=5`, `auth_attempts=0`, and `auth_success` is absent. This represents **candidate repeated SSH activity**, not proof of five incorrect passwords. Failure confirmation comes from `sshd` through Wazuh. Even a known auth result on the Zeek side remains a network inference rather than a server audit record.
 
-Il collector Zeek invia il solo log custom con `zeek_ssh_json: `; il decoder dedicato
-usa `JSON_Decoder` e aggiunge gli alias statici IPv4 per la correlazione.
+The Zeek collector sends only the custom log with the `zeek_ssh_json: ` prefix. The dedicated decoder uses `JSON_Decoder` and adds static IPv4 aliases for correlation.
 
-## Regole di correlazione
+## Correlation rules
 
-| ID | Funzione | Finestra | Chiave |
+| ID | Function | Window | Key |
 |---|---|---|---|
-| 100922 | Base del decoder JSON SSH dedicato | Evento singolo | Location + origine Zeek |
-| 100920 | Candidato SSH dal sensore | Soglie nello script Zeek | Campi rete |
-| 100921 | Successo inferito dopo pattern SSH | Follow-up dello script | `[src,dst,dport]` |
-| 5712 / 5763 | Aggregazione endpoint stock | 8 eventi / 120 s; `ignore=60` osservato | Sorgente nel contesto agent |
-| 120935 | Zeek precedente + fallimenti endpoint | 300 s | `srcip`, `dstip`, cross-agent |
-| 120938 / 120939 | Fallimenti endpoint precedenti + Zeek | 300 s | `srcip`, `dstip`, cross-agent |
-| 120936 | Scan precedente + coppia SSH confermata | 900 s | `src_ip` dello scanner |
-| 120937 | Login riuscito dopo 120936 | 900 s | Stessa coppia di IP |
-| 120940 | Fan-out | 900 s, frequency 2 | Stessa sorgente, destinazione diversa |
-| 120941 | Fan-in | 900 s, frequency 2 | Sorgente diversa, stessa destinazione |
+| 100922 | Dedicated SSH JSON decoder base | Single event | Location + Zeek source |
+| 100920 | SSH candidate from the sensor | Thresholds in Zeek script | Network fields |
+| 100921 | Inferred success after SSH pattern | Script follow-up | `[src,dst,dport]` |
+| 5712 / 5763 | Stock endpoint aggregation | 8 events / 120 s; observed `ignore=60` | Source within agent context |
+| 120935 | Previous Zeek + endpoint failures | 300 s | `srcip`, `dstip`, cross-agent |
+| 120938 / 120939 | Previous endpoint failures + Zeek | 300 s | `srcip`, `dstip`, cross-agent |
+| 120936 | Previous scan + confirmed SSH pair | 900 s | scanner `src_ip` |
+| 120937 | Successful login after 120936 | 900 s | Same IP pair |
+| 120940 | Fan-out | 900 s, frequency 2 | Same source, different destination |
+| 120941 | Fan-in | 900 s, frequency 2 | Different source, same destination |
 
-La `120936` e' intenzionalmente source-oriented: lo scan multi-target non offre
-necessariamente una singola vittima da confrontare. La `120937` richiede entrambi
-gli IP, ma **non richiede lo stesso username** del brute force. Il test positivo ha
-usato tentativi su utente inesistente e successivamente login dell'utente reale
-`serverdb`; dimostra la catena per host, non il recupero della password di quell'utente.
+`120936` is intentionally source-oriented because a multi-target scan does not necessarily provide a single victim to compare. `120937` requires both IP addresses but **does not require the same username** as the brute-force attempts. The positive test used attempts against a nonexistent user followed by a successful login as the real `serverdb` user; this demonstrates a host-level chain, not recovery of that user's password.
 
-`global_frequency` permette la correlazione tra agent sul medesimo Manager. Non e'
-una correlazione distribuita tra nodi di cluster.
+`global_frequency` enables correlation between agents on the same Manager. It is not distributed correlation across cluster nodes.
 
-## Soglie e stato
+## Thresholds and state
 
-Zeek: 5 connessioni rilevanti oppure 5 tentativi inferiti, finestra di 60 s ancorata
-al primo evento della sequenza, scadenza dello stato dopo 10 min senza scritture.
-Follow-up successo: 5 min dall'ultimo evento della sequenza. Questi valori descrivono
-la configurazione del laboratorio, non una finestra mobile esatta certificata in ogni carico.
+Zeek uses 5 relevant connections or 5 inferred attempts, a 60-second window anchored to the first event in the sequence, and state expiration after 10 minutes without writes. Success follow-up is 5 minutes from the latest sequence event. These values describe the laboratory configuration, not a certified exact sliding window under every workload.
 
-Gli esperimenti fan-out/fan-in hanno usato una pausa di 70 s fra le coppie per non
-interferire con `ignore=60` della regola stock. Questo e' un **limite della prova**:
-la pausa rende il test sequenziale e non corregge i possibili mancati alert di attacchi
-contemporanei. Non dichiarare supporto alla concorrenza sulla sola base di tali prove.
+Fan-out/fan-in experiments used a 70-second pause between pairs to avoid interference from the stock rule's `ignore=60`. This is a **test limitation**: the pause makes the test sequential and does not resolve possible missed alerts under simultaneous attacks. Do not claim concurrency support based only on these tests.
 
-Nel ruleset `ssh_pair_confirmed` e' anche nel gruppo esterno: viene assegnato
-alle altre regole contenute, non esclusivamente alle prime tre pair confirmation.
-Questa semantica e' conservata, ma e' un punto di regressione da verificare prima di
-estendere il ruleset. Non viene modificata nascostamente durante la pubblicazione.
+In the ruleset, `ssh_pair_confirmed` is also present in the outer group and is therefore assigned to other contained rules, not exclusively the first three pair-confirmation rules. This behavior is preserved and should be regression-tested before further extension of the ruleset. It is not silently altered for publication.
 
-## Sicurezza e pubblicazione
+## Security and publication
 
-La configurazione pubblicata non abilita nuove quarantene per gli alert SSH. Il Python RouterOS
-fornito seleziona `data.src_ip`: nella reverse shell rappresenta il client sospetto,
-nello scenario SSH rappresenta la sorgente dei tentativi. Non collegare automaticamente
-le nuove regole alla stessa Active Response senza definire la policy.
+The published configuration does not enable new quarantine actions for SSH alerts. The supplied RouterOS Python script selects `data.src_ip`: in the reverse-shell scenario that represents the suspicious client, while in the SSH scenario it represents the source of the attempts. Do not automatically connect the new SSH rules to the same Active Response without defining the intended policy.
 
-Le descrizioni originali di `100920`/`100921` sono conservate. Con esito unknown,
-leggere anche `detection_reason` e i contatori: la descrizione legacy "brute force
-detected" non trasforma un candidato di rete in un fallimento certo.
-
+The original descriptions of `100920`/`100921` are preserved. When the outcome is unknown, also inspect `detection_reason` and the counters: the legacy description `brute force detected` does not turn a network candidate into a confirmed authentication failure.

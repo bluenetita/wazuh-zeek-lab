@@ -1,19 +1,19 @@
 # Evidence - Reverse Shell
 
-Questa directory raccoglie evidenze ridotte relative allo scenario reverse shell.
+This directory contains reduced evidence related to the reverse-shell scenario.
 
-Le prove OFF/ON usate anche per validare il containment RouterOS sono conservate in:
+The OFF/ON runs also used to validate RouterOS containment are stored under:
 
 ```text
 ../routeros-ar/2026-10-01/
 ```
 
-Il controllo negativo storico è in:
+The historical negative control is stored under:
 
 ```text
 2026-10-01-negative-control/
 ```
 
-La campagna OFF/ON include UID distinti, eventi Zeek selezionati, alert Wazuh e diagnostica movement v2. Non viene presentata come una cattura completa di tutti i log custom per ogni UID.
+The OFF/ON campaign contains distinct UIDs, selected Zeek events, Wazuh alerts, and movement-v2 diagnostics. It is not presented as a complete capture of every custom log for every UID.
 
-Per l'interpretazione del detector vedere [`../../scenarios/reverse-shell/README.md`](../../scenarios/reverse-shell/README.md); per il containment vedere [`../../scenarios/active-response/README.md`](../../scenarios/active-response/README.md).
+For detector interpretation, see [`../../scenarios/reverse-shell/README.md`](../../scenarios/reverse-shell/README.md). For containment, see [`../../scenarios/active-response/README.md`](../../scenarios/active-response/README.md).

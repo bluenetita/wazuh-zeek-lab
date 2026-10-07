@@ -1,7 +1,7 @@
-# Victim Server - documentazione legacy
+# Victim Server - legacy documentation
 
-Questa directory viene mantenuta per conservare la documentazione di un target vulnerabile usato nelle fasi precedenti del cyber range.
+This directory is retained to preserve documentation for a vulnerable target used during earlier phases of the cyber range.
 
-**Stato attuale:** non è il target principale delle validazioni recenti descritte nello snapshot ottobre 2026. Gli scenari finali qui pubblicati usano soprattutto Client-Linux, ServerDB e i cloni Client-Linux2/ServerDB2 per i test multi-host SSH.
+**Current status:** it is not the primary target of the recent validations described in the October 2026 snapshot. The final scenarios published here primarily use Client-Linux, ServerDB, and the Client-Linux2/ServerDB2 clones for multi-host SSH validation.
 
-Il contenuto storico non deve essere interpretato come requisito per riprodurre AppArmor, Active Response RouterOS o SSH Endpoint Normalizer.
+The historical content should not be interpreted as a requirement for reproducing AppArmor, RouterOS Active Response, or the SSH Endpoint Normalizer.

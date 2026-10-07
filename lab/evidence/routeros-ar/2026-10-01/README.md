@@ -1,56 +1,37 @@
-# Reverse shell e RouterOS Active Response: 5 OFF + 5 ON
+# Reverse shell and RouterOS Active Response: 5 OFF + 5 ON
 
-Campagna del **1 ottobre 2026**.
-Le prove `RS-OFF-01` ... `RS-OFF-05` e `RS-ON-01` ... `RS-ON-05` sono mantenute
-con i nomi, gli UID e i timestamp originali.
+Campaign performed on **October 1, 2026**. Runs `RS-OFF-01` ... `RS-OFF-05` and `RS-ON-01` ... `RS-ON-05` retain their original names, UIDs, and timestamps.
 
-| Condizione | Prove | Live + movement + alert eleggibile | Invocazione AR registrata | Quarantine osservata | Fallimento del probe previsto |
+| Condition | Runs | Live + movement + eligible alert | AR invocation recorded | Quarantine observed | Expected probe failure |
 |---|---:|---:|---:|---:|---:|
 | OFF | 5 | 5/5 | 0/5 | 0/5 | 0/5 |
 | ON | 5 | 5/5 | 5/5 | 5/5 | 5/5 |
 
-Il probe e' eseguito **dal client 10.3.20.2 verso 10.2.0.2 TCP/22**, con timeout
-0.5 s e intervallo configurato 0.50 s. Non e' un probe dal Manager alla porta del
-client. La baseline richiede 2 conferme e il blocco 2 conferme. `contained_utc`
-riporta il primo fallimento della sequenza usata dal riepilogo.
+The probe runs **from client `10.3.20.2` to `10.2.0.2` on TCP/22**, with a 0.5-second timeout and a configured 0.50-second interval. It is not a probe from the Manager to a port on the client. The baseline requires 2 confirmations and the blocked state requires 2 confirmations. `contained_utc` records the first failure in the sequence used by the summary.
 
-## Tempi descrittivi: conservare il significato delle misure
+## Descriptive timing: preserve the meaning of each measurement
 
-| Campo della campagna | Definizione | n | Media | Mediana | Min-max |
+| Campaign field | Definition | n | Mean | Median | Min-max |
 |---|---|---:|---:|---:|---:|
-| T_D | t0 del coordinatore -> alert Wazuh eleggibile | 10 | 33.2141 s | 32.9225 s | 31.938-35.925 s |
-| T_AR, ON | alert Wazuh -> riga locale routeros_quarantine | 5 | 0.3578 s | 0.359 s | 0.341-0.372 s |
-| T_C, ON | t0 del coordinatore -> primo fallimento probe registrato | 5 | 36.744 s | 36.868 s | 36.269-37.017 s |
+| T_D | coordinator t0 -> eligible Wazuh alert | 10 | 33.2141 s | 32.9225 s | 31.938-35.925 s |
+| T_AR, ON | Wazuh alert -> local routeros_quarantine log line | 5 | 0.3578 s | 0.359 s | 0.341-0.372 s |
+| T_C, ON | coordinator t0 -> first recorded probe failure | 5 | 36.744 s | 36.868 s | 36.269-37.017 s |
 
-I calcoli in [metrics.json](metrics.json) riproducono il [riepilogo originale](metrics_summary.original.txt).
-**Non sono tempi universali di contenimento.** T_D include la latenza umana fra GO e
-trigger. T_AR usa timestamp dello stesso host Wazuh, ma identifica la riga di
-completamento dello script, non il primo pacchetto bloccato. T_C combina clock del
-coordinatore e del client, polling e timeout; gli snapshot indicano clock non
-sincronizzati. Non sottrarre questi valori per ottenere latenze precise fra host.
+The calculations in [metrics.json](metrics.json) reproduce the [original summary](metrics_summary.original.txt). **These are not universal containment times.** T_D includes human latency between GO and trigger. T_AR uses timestamps from the same Wazuh host but identifies the script completion log line rather than the first blocked packet. T_C combines coordinator and client clocks, polling, and timeout; the snapshots indicate unsynchronized clocks. Do not subtract these values to derive precise cross-host latencies.
 
-Il fallimento del probe, la membership di Quarantine e il messaggio dello script
-sono evidenze complementari. Non dimostrano isolamento di **tutti** i protocolli
-ne' chiusura indipendentemente verificata della specifica sessione reverse shell
-TCP/4444. Il risultato OFF e' assenza di blocco **nell'intervallo osservato**, non
-un tempo infinito stimato.
+Probe failure, Quarantine membership, and the script message are complementary evidence. They do not demonstrate isolation of **all** protocols or independently verify closure of the specific reverse-shell TCP/4444 session. The OFF result means no block was observed **during the observation interval**, not an estimated infinite containment time.
 
-## Evidenze ridotte
+## Reduced evidence
 
-- [Matrice originale](routeros_ar_runs.original.tsv) e [verifica per run](verified_runs.jsonl).
-- [Alert Wazuh selezionati per UID](selected_wazuh_alerts.jsonl) e [record Zeek](selected_zeek_events.jsonl).
-- [Messaggi Active Response](active_response_events.jsonl) e [Quarantine prima/dopo](quarantine.snapshots.txt).
-- [Contatori firewall](firewall-counters.snapshots.txt) e [listing della policy](firewall-policy.snapshot.txt).
-- Serie complete del probe, con sole righe timestamp/rc valide, in `probes/RS-OFF-01.tsv` ... `probes/RS-ON-05.tsv`.
-- [Cleanup del coordinatore](coordinator-cleanup.log): evidenza di rimozione esplicita della quarantena.
+- [Original matrix](routeros_ar_runs.original.tsv) and [per-run verification](verified_runs.jsonl).
+- [Selected Wazuh alerts by UID](selected_wazuh_alerts.jsonl) and [Zeek records](selected_zeek_events.jsonl).
+- [Active Response messages](active_response_events.jsonl) and [Quarantine before/after](quarantine.snapshots.txt).
+- [Firewall counters](firewall-counters.snapshots.txt) and [policy listing](firewall-policy.snapshot.txt).
+- Complete probe series containing only valid timestamp/rc rows in `probes/RS-OFF-01.tsv` ... `probes/RS-ON-05.tsv`.
+- [Coordinator cleanup](coordinator-cleanup.log): evidence of explicit quarantine removal.
 
-Il listing firewall documenta l'ordine osservato, con FastTrack/established prima
-dei drop Quarantine. E' uno **snapshot diagnostico**, non un export `.rsc`
-importabile e non una policy proposta per produzione. I contatori sono snapshot,
-non misure attribuibili univocamente a ciascuna sessione.
+The firewall listing documents the observed order, with FastTrack/established rules before the Quarantine drops in the historical snapshot. It is a **diagnostic snapshot**, not an importable `.rsc` export or a proposed production policy. Counter values are snapshots and cannot be uniquely attributed to individual sessions.
 
-Il probe torna raggiungibile nei run ON dopo la fase di cleanup; la campagna invia
-esplicitamente la rimozione dalla lista. Questo **non prova un rollback autonomo**
-dello script `routeros_quarantine.py`.
-La configurazione Manager distribuita rimane con l'azione commentata.
+The probe becomes reachable again in ON runs after cleanup because the campaign explicitly removes the address from the list. This **does not demonstrate autonomous rollback** by `routeros_quarantine.py`.
 
+The distributed Manager configuration keeps the action commented out.

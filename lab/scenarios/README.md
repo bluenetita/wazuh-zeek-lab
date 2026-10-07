@@ -1,30 +1,30 @@
 # Scenarios
 
-Questa directory raccoglie gli scenari effettivamente documentati nel cyber range. Ogni scenario collega obiettivo, sistemi coinvolti, detection e risultati osservati; payload, exploit e materiale offensivo riutilizzabile non vengono pubblicati.
+This directory contains the scenarios that are actually documented in the cyber range. Each scenario links its objective, involved systems, detection logic, and observed results. Reusable offensive payloads, exploits, and similar material are not published.
 
-## Scenari
+## Scenarios
 
-| Scenario | Directory | Stato | Componenti principali |
+| Scenario | Directory | Status | Main components |
 |---|---|---|---|
-| Reverse Shell | `reverse-shell/` | Validato | Zeek, Auditd, Wazuh |
-| Privilege Escalation | `privilege-escalation/` | Validato | Auditd/Wazuh |
-| Network Scanning | `network-scanning/` | Validato | Zeek + Wazuh |
-| AppArmor Mitigation | `apparmor-mitigation/` | Validato | ServerDB + AppArmor + Wazuh |
-| Active Response | `active-response/` | Validato | Wazuh + RouterOS |
-| SSH Brute Force | `ssh-bruteforce/` | Validato | Zeek + sshd + Wazuh |
+| Reverse Shell | `reverse-shell/` | Validated | Zeek, Auditd, Wazuh |
+| Privilege Escalation | `privilege-escalation/` | Validated | Auditd/Wazuh |
+| Network Scanning | `network-scanning/` | Validated | Zeek + Wazuh |
+| AppArmor Mitigation | `apparmor-mitigation/` | Validated | ServerDB + AppArmor + Wazuh |
+| Active Response | `active-response/` | Validated | Wazuh + RouterOS |
+| SSH Brute Force | `ssh-bruteforce/` | Validated | Zeek + sshd + Wazuh |
 
-## Flusso di osservabilità
+## Observability flow
 
 ```text
-Traffico di rete  -> Zeek -----------+
+Network traffic -> Zeek ------------+
                                       |
-Eventi host ------> Wazuh Agent ----> Wazuh Manager -> decoder/rules -> alert
+Host events -----> Wazuh Agent ----> Wazuh Manager -> decoders/rules -> alerts
                                       |
-                                      +-> Active Response (se abilitata)
+                                      +-> Active Response (if enabled)
 ```
 
-## Principio di validazione
+## Validation principle
 
-Le prove positive sono accompagnate, quando disponibili, da controlli negativi o confronti OFF/ON. Le evidenze ridotte sono conservate sotto [`../evidence/`](../evidence/README.md).
+Where available, positive tests are accompanied by negative controls or OFF/ON comparisons. Reduced evidence is stored under [`../evidence/`](../evidence/README.md).
 
-Nel caso SSH la validazione usa due sorgenti e due vittime per verificare che la correlazione non mescoli sessioni di coppie differenti. Nel caso AppArmor la stessa operazione viene confrontata tra complain ed enforce. Nel caso RouterOS viene confrontato il comportamento con Active Response disabilitata e abilitata.
+For SSH, validation uses two sources and two victims to verify that correlation does not mix sessions from different pairs. For AppArmor, the same operation is compared between complain and enforce modes. For RouterOS, behavior is compared with Active Response disabled and enabled.

@@ -1,19 +1,19 @@
 # RouterOS
 
-RouterOS è il router inter-VLAN del cyber range e, nello scenario di risposta automatica, anche il punto di enforcement della quarantena Wazuh.
+RouterOS is the inter-VLAN router in the cyber range and, in the automated-response scenario, also acts as the enforcement point for Wazuh quarantine.
 
-## Ruolo di rete
+## Network role
 
-| Interfaccia | Ruolo | Rete |
+| Interface | Role | Network |
 |---|---|---|
-| `ether1` | uplink verso pfSense | `10.4.0.0/24` |
-| `ether2` | trunk/LAN verso le VLAN interne | `10.3.0.0/16` |
-| `ether3` | rete di test | `10.5.0.0/24` |
+| `ether1` | uplink toward pfSense | `10.4.0.0/24` |
+| `ether2` | trunk/LAN toward internal VLANs | `10.3.0.0/16` |
+| `ether3` | test network | `10.5.0.0/24` |
 | `vlan10` | Monitoring | `10.3.10.0/24` |
 | `vlan20` | Client | `10.3.20.0/24` |
 | `vlan30` | Server | `10.3.30.0/24` |
 
-Gateway documentati nel laboratorio:
+Gateways documented in the lab:
 
 ```text
 vlan10  10.3.10.1/24
@@ -21,63 +21,63 @@ vlan20  10.3.20.1/24
 vlan30  10.3.30.1/24
 ```
 
-RouterOS inoltra il traffico esterno verso pfSense e mantiene anche la rotta della rete VPN documentata nella configurazione del laboratorio. Il masquerade verso l'uplink può modificare l'IP sorgente osservato da pfSense.
+RouterOS forwards external traffic toward pfSense and also retains the VPN-network route documented in the lab configuration. Masquerading toward the uplink can change the source IP observed by pfSense.
 
-I file storici di interfacce, VLAN, routing e firewall già presenti in questa directory restano parte della documentazione e non vengono sostituiti da questo README.
+Historical interface, VLAN, routing, and firewall files already present in this directory remain part of the documentation and are not replaced by this README.
 
-## Quarantena Wazuh
+## Wazuh quarantine
 
-L'Active Response usa una address-list denominata `Quarantine`. Lo script pubblico è:
+Active Response uses an address list named `Quarantine`. The public script is:
 
 ```text
 blue-team/wazuh/active-response/routeros_quarantine.py
 ```
 
-Il modello di configurazione è:
+The configuration template is:
 
 ```text
 blue-team/wazuh/active-response/routeros.conf.example
 ```
 
-Il file contiene soltanto placeholder: chiave privata SSH, password e configurazione reale del router non vengono versionate.
+The template contains placeholders only; the private SSH key, passwords, and real router configuration are not versioned.
 
-## Comportamento dello script
+## Script behavior
 
-Quando riceve un'azione `add` valida, lo script estrae `data.src_ip`, verifica sintatticamente l'indirizzo, apre una sessione SSH non interattiva verso RouterOS, aggiunge l'IP alla lista se necessario e rimuove le connessioni corrispondenti dal connection tracking.
+When it receives a valid `add` action, the script extracts `data.src_ip`, validates the address syntax, opens a non-interactive SSH session to RouterOS, adds the IP to the list if necessary, and removes matching connections from connection tracking.
 
-La address-list da sola non applica il blocco: il risultato dipende dalle firewall rules effettive.
+The address list by itself does not block traffic; the result depends on the actual firewall rules.
 
-## Policy osservata durante i test
+## Policy observed during testing
 
-Lo snapshot della campagna contiene:
+The campaign snapshot contains:
 
-- eccezioni per la comunicazione Wazuh;
-- drop verso/da host presenti in `Quarantine`;
-- regole inter-VLAN;
-- regole di accesso VPN;
-- FastTrack/established prima dei drop di quarantena nello snapshot storico.
+- exceptions for Wazuh communication;
+- drops to/from hosts in `Quarantine`;
+- inter-VLAN rules;
+- VPN access rules;
+- FastTrack/established rules before the quarantine drops in the historical snapshot.
 
-Quest'ultimo punto rende necessario verificare l'ordine delle regole e il connection tracking prima di riusare la policy in un ambiente differente.
+The last point means that rule order and connection tracking must be reviewed before reusing the policy in another environment.
 
-## Validazione OFF/ON
+## OFF/ON validation
 
-La campagna del 1 ottobre 2026 contiene 10 run:
+The October 1, 2026 campaign contains 10 runs:
 
-| Modalità | Run | AR osservata | Quarantine | Probe bloccato |
+| Mode | Runs | AR observed | Quarantine | Probe blocked |
 |---|---:|---:|---:|---:|
 | OFF | 5 | 0/5 | 0/5 | 0/5 |
 | ON | 5 | 5/5 | 5/5 | 5/5 |
 
-Il probe verificava il flusso `10.3.20.2 -> 10.2.0.2:22`. Non è una prova del blocco universale di ogni protocollo.
+The probe verified the flow `10.3.20.2 -> 10.2.0.2:22`. It is not proof that every protocol is universally blocked.
 
-Dettagli, metriche e limitazioni: [`../../scenarios/active-response/README.md`](../../scenarios/active-response/README.md).
+Details, metrics, and limitations: [`../../scenarios/active-response/README.md`](../../scenarios/active-response/README.md).
 
-## Cleanup e stato pubblicato
+## Cleanup and published state
 
-La rimozione dalla quarantena durante la campagna era eseguita dal coordinatore: lo script pubblicato non implementa un rollback automatico equivalente.
+Quarantine removal during the campaign was performed by the coordinator; the published script does not implement an equivalent automatic rollback.
 
-Nel `blue-team/wazuh/manager/ossec.conf` incluso nella repository il comando di quarantena è definito, ma il blocco `<active-response>` corrispondente è commentato. Il repository documenta quindi la funzione senza abilitarla implicitamente.
+In the repository's `blue-team/wazuh/manager/ossec.conf`, the quarantine command is defined, but the corresponding `<active-response>` block is commented out. The repository therefore documents the feature without enabling it implicitly.
 
-## Sicurezza
+## Security
 
-Non pubblicare export RouterOS contenenti credenziali, host key private, segreti di management o dati non necessari. Lo snapshot della policy incluso nelle evidenze è ridotto e destinato alla spiegazione del test, non all'importazione diretta.
+Do not publish RouterOS exports containing credentials, private host keys, management secrets, or unnecessary data. The policy snapshot included with the evidence is reduced and intended to explain the test, not for direct import.

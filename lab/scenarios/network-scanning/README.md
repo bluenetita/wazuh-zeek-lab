@@ -1,37 +1,37 @@
 # Network Scanning
 
-Scenario di rilevamento di attività di scanning mediante script Zeek custom e regole Wazuh.
+Scenario for detecting scanning activity through custom Zeek scripts and Wazuh rules.
 
-## Detector e soglie nello snapshot finale
+## Detectors and thresholds in the final snapshot
 
-| Detector | Soglia | Finestra |
+| Detector | Threshold | Window |
 |---|---:|---:|
-| TCP address scan | 20 destinazioni per sorgente/porta | 60 s |
-| TCP port scan | 100 porte | 60 s |
-| UDP port scan | 50 porte | 60 s |
-| ARP host scan | 20 target | 60 s |
-| ICMP host scan | 2 target | 60 s |
+| TCP address scan | 20 destinations per source/port | 60 s |
+| TCP port scan | 100 ports | 60 s |
+| UDP port scan | 50 ports | 60 s |
+| ARP host scan | 20 targets | 60 s |
+| ICMP host scan | 2 targets | 60 s |
 
-Le soglie sono valori del laboratorio e non una baseline universale.
+These are laboratory values, not a universal baseline.
 
 ## Address scan
 
-File aggiornato:
+Updated file:
 
 ```text
 blue-team/zeek/site/custom_scripts/scanning/address_scan.zeek
 ```
 
-Lo script traccia, per TCP, le destinazioni contattate da una sorgente su una stessa porta e genera `address_scan` quando il numero di target raggiunge la soglia.
+For TCP traffic, the script tracks destinations contacted by a source on the same port and emits `address_scan` when the number of targets reaches the threshold.
 
-Durante le prove SSH il valore sperimentale `threshold=2` causava un falso positivo: A1 che contattava V1 e V2 sulla porta 22 veniva classificato anche come address scan. Lo snapshot finale mantiene `threshold=20`; dopo il cambiamento il test su due vittime non ha più prodotto `100918`.
+During SSH testing, the experimental value `threshold=2` caused a false positive: A1 contacting V1 and V2 on port 22 was also classified as an address scan. The final snapshot keeps `threshold=20`; after that change, the two-victim test no longer produced rule `100918`.
 
-## Correlazione con SSH
+## Correlation with SSH
 
-La regola `120936` collega scanning precedente e brute force SSH confermato dalla stessa sorgente. È intenzionalmente source-oriented: uno scan può coinvolgere più destinazioni e non sempre fornisce una singola vittima da confrontare.
+Rule `120936` links previous scanning activity with confirmed SSH brute force from the same source. It is intentionally source-oriented because a scan can involve multiple destinations and does not always provide one victim that should be matched.
 
-Il tuning a 20 isola correttamente il test fan-out a due server, ma non costituisce una validazione completa dell'interazione simultanea tra uno scan reale e il fan-out SSH.
+Tuning the threshold to 20 cleanly isolates the two-server fan-out test, but it is not a complete validation of simultaneous interaction between a real scan and SSH fan-out.
 
-## Riproducibilità
+## Reproducibility
 
-Con soglia 20, contattare soltanto due host non è più sufficiente per riprodurre `100918`. Le prove di scanning devono essere coerenti con la soglia configurata e svolte esclusivamente nel cyber range autorizzato.
+With threshold 20, contacting only two hosts is no longer sufficient to reproduce `100918`. Scanning tests must match the configured threshold and must be performed only inside the authorized cyber range.

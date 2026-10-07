@@ -1,15 +1,15 @@
-# Cyber Range Zeek + Wazuh
+# Zeek + Wazuh Cyber Range
 
-Repository di documentazione, configurazioni sanificate ed evidenze ridotte relative a un cyber range virtualizzato su Proxmox. Il laboratorio integra **Zeek** per la visibilità di rete, **Wazuh** per raccolta, normalizzazione, correlazione e risposta, **RouterOS** per routing/containment e **AppArmor** per il controllo applicativo sul server vulnerabile.
+Repository containing documentation, sanitized configurations, and reduced evidence for a cyber range virtualized on Proxmox. The lab integrates **Zeek** for network visibility, **Wazuh** for collection, normalization, correlation, and response, **RouterOS** for routing and containment, and **AppArmor** for application-level control on the vulnerable server.
 
-## Obiettivo
+## Objective
 
-Il progetto nasce per verificare, in un ambiente controllato, quanto sia utile combinare segnali network-based e host-based durante scenari di sicurezza reali del laboratorio. Le configurazioni pubblicate sono quelle rilevanti per la riproducibilità del lavoro; credenziali, chiavi private, webhook funzionanti, PCAP completi e log grezzi non vengono versionati.
+The project evaluates, in a controlled environment, the value of combining network-based and host-based signals across realistic lab security scenarios. The repository contains the configurations relevant to reproducibility; credentials, private keys, live webhooks, full PCAPs, and complete raw logs are not versioned.
 
-## Architettura logica
+## Logical architecture
 
 ```text
-Rete esterna / AttackerVM
+External network / AttackerVM
           |
        pfSense
           |
@@ -23,72 +23,72 @@ Monitoring    Client           Server
 Wazuh      Client  Windows   ServerDB ...
 Zeek       Linux
              |
-             +-- Client-Linux2 (validazione SSH)
+             +-- Client-Linux2 (SSH validation)
 
-Mirror OVS delle VLAN -> VLAN 999 -> ZeekVM -> Wazuh
+OVS mirror of VLANs -> VLAN 999 -> ZeekVM -> Wazuh
 ```
 
-Per la validazione multi-host SSH sono stati usati due endpoint sorgente e due server:
+Two source endpoints and two servers were used for multi-host SSH validation:
 
-| Ruolo | Host | IP di laboratorio |
+| Role | Host | Lab IP |
 |---|---|---|
 | A1 | Client-Linux | `10.3.20.2` |
 | A2 | Client-Linux2 | `10.3.20.4` |
 | V1 | ServerDB | `10.3.30.3` |
 | V2 | ServerDB2 | `10.3.30.4` |
 
-I due cloni aggiuntivi servono soprattutto alla validazione delle correlazioni e non introducono una nuova architettura applicativa. Dettagli: [`docs/topology-ssh-validation-2026-10.md`](docs/topology-ssh-validation-2026-10.md).
+The two additional clones are used mainly to validate correlation behavior and do not introduce a new application architecture. See [`docs/topology-ssh-validation-2026-10.md`](docs/topology-ssh-validation-2026-10.md).
 
-## Componenti principali
+## Main components
 
-| Componente | Ruolo |
+| Component | Role |
 |---|---|
-| Proxmox VE | Virtualizzazione del cyber range |
-| Open vSwitch | Bridge e mirroring del traffico |
-| pfSense | Firewall verso la rete esterna simulata |
-| RouterOS | Routing inter-VLAN e containment tramite address-list |
-| Zeek | Network Security Monitoring e detector custom |
-| Wazuh | Raccolta host/network, decoder, regole, correlazioni e Active Response |
-| AppArmor | Mitigazione del servizio inventario su ServerDB |
-| Auditd | Telemetria host usata nelle correlazioni reverse shell/privilege escalation |
+| Proxmox VE | Cyber-range virtualization |
+| Open vSwitch | Bridging and traffic mirroring |
+| pfSense | Firewall toward the simulated external network |
+| RouterOS | Inter-VLAN routing and containment through an address list |
+| Zeek | Network Security Monitoring and custom detectors |
+| Wazuh | Host/network collection, decoders, rules, correlations, and Active Response |
+| AppArmor | Mitigation for the inventory service on ServerDB |
+| Auditd | Host telemetry used in reverse-shell and privilege-escalation correlations |
 
-## Scenari documentati
+## Documented scenarios
 
-| Scenario | Stato | Evidenze principali |
+| Scenario | Status | Main evidence |
 |---|---|---|
-| [Reverse shell](scenarios/reverse-shell/README.md) | Validato | Zeek live/movement, Auditd/Wazuh, correlazioni cross-source |
-| [Privilege escalation](scenarios/privilege-escalation/README.md) | Validato | Eventi host-based e regole Wazuh |
-| [Network scanning](scenarios/network-scanning/README.md) | Validato | Detector Zeek e regole Wazuh di scanning |
-| [AppArmor mitigation](scenarios/apparmor-mitigation/README.md) | Validato | 5 complain + 5 enforce della serie finale servicefix |
-| [Active Response RouterOS](scenarios/active-response/README.md) | Validato | 5 prove OFF + 5 ON con quarantena e probe |
-| [SSH brute force / Endpoint Normalizer](scenarios/ssh-bruteforce/README.md) | Validato | Pair correlation, mismatch, fan-out `120940`, fan-in `120941` |
+| [Reverse shell](scenarios/reverse-shell/README.md) | Validated | Zeek live/movement, Auditd/Wazuh, cross-source correlations |
+| [Privilege escalation](scenarios/privilege-escalation/README.md) | Validated | Host-based events and Wazuh rules |
+| [Network scanning](scenarios/network-scanning/README.md) | Validated | Zeek scanning detectors and Wazuh rules |
+| [AppArmor mitigation](scenarios/apparmor-mitigation/README.md) | Validated | 5 complain + 5 enforce runs from the final servicefix series |
+| [RouterOS Active Response](scenarios/active-response/README.md) | Validated | 5 OFF + 5 ON runs with quarantine and connectivity probe |
+| [SSH brute force / Endpoint Normalizer](scenarios/ssh-bruteforce/README.md) | Validated | Pair correlation, mismatch tests, fan-out `120940`, fan-in `120941` |
 
-La repository non presenta come completati scenari per cui non sono incluse evidenze sufficienti in questo snapshot.
+The repository does not mark scenarios as completed when this snapshot does not contain enough supporting evidence.
 
-## Risultati recenti
+## Recent results
 
 ### SSH Endpoint Normalizer
 
-La correlazione SSH usa la coppia ordinata **attacker -> victim**, non soltanto la sorgente. L'endpoint arricchisce i log `sshd` con `wazuh_dst_ip=$(host_ip)`; i decoder espongono sia i campi statici `srcip`/`dstip` sia gli alias dinamici `src_ip`/`dest_ip`.
+SSH correlation uses the ordered **attacker -> victim** pair rather than only the source address. The endpoint enriches `sshd` logs with `wazuh_dst_ip=$(host_ip)`; the decoders expose both static `srcip`/`dstip` fields and dynamic `src_ip`/`dest_ip` aliases.
 
-Sono stati verificati:
+The following cases were verified:
 
-- stessa coppia: correlazione positiva;
-- stessa sorgente ma destinazione diversa: nessuna chiusura errata della catena di successo;
-- sorgente diversa ma stessa destinazione: nessuna chiusura errata della catena;
+- same pair: positive correlation;
+- same source, different destination: no incorrect completion of the success chain;
+- different source, same destination: no incorrect completion of the chain;
 - fan-out A1->V1 + A1->V2: `120940`;
 - fan-in A1->V1 + A2->V1: `120941`;
-- A1->V1 + A2->V2: due coppie indipendenti, senza falso fan-out/fan-in.
+- A1->V1 + A2->V2: two independent pairs without false fan-out/fan-in.
 
 ### AppArmor
 
-La serie finale `servicefix` contiene 5 coppie complain/enforce. L'esecuzione di `/usr/bin/dash` risulta consentita in complain e negata in enforce; nelle prove enforce sono presenti gli alert Wazuh previsti. Il servizio rimane attivo e con PID invariato nella serie finale.
+The final `servicefix` series contains 5 complain/enforce pairs. Execution of `/usr/bin/dash` is allowed in complain mode and denied in enforce mode; the expected Wazuh alerts are present in the enforce runs. The service remains active and the Main PID stays unchanged in the final series.
 
-### Active Response RouterOS
+### RouterOS Active Response
 
-La campagna include 5 prove con Active Response disabilitata e 5 abilitate. Nelle prove ON sono presenti invocazione AR, membership nella address-list `Quarantine` e fallimento del probe di connettività previsto; nelle prove OFF questi indicatori non compaiono. La configurazione pubblicata mantiene la quarantena automatica commentata nel Manager: la repository documenta la funzione senza abilitarla implicitamente.
+The campaign contains 5 runs with Active Response disabled and 5 with it enabled. In the ON runs, the AR invocation, membership in the `Quarantine` address list, and the expected connectivity-probe failure were observed; these indicators were absent in the OFF runs. The published Manager configuration keeps automatic quarantine commented out: the repository documents the feature without enabling it implicitly.
 
-## Struttura della repository
+## Repository structure
 
 ```text
 wazuh-zeek-lab/
@@ -108,19 +108,19 @@ wazuh-zeek-lab/
 
 ### Blue Team
 
-- [`blue-team/zeek/`](blue-team/zeek/README.md): configurazione Zeek, script custom e logging.
-- [`blue-team/wazuh/`](blue-team/wazuh/README.md): agent, decoder, regole, correlazioni e Active Response.
-- `blue-team/apparmor/`: profilo AppArmor del servizio inventario.
+- [`blue-team/zeek/`](blue-team/zeek/README.md): Zeek configuration, custom scripts, and logging.
+- [`blue-team/wazuh/`](blue-team/wazuh/README.md): agents, decoders, rules, correlations, and Active Response.
+- `blue-team/apparmor/`: AppArmor profile for the inventory service.
 
 ### Infrastructure
 
-La directory [`infrastructure/`](infrastructure/README.md) descrive gli endpoint e i server interni. `ServerDB2` e `Client-Linux2` sono cloni usati per la validazione multi-host SSH. La vecchia directory `victim-server/` viene mantenuta come documentazione storica e non rappresenta il target principale delle validazioni recenti.
+The [`infrastructure/`](infrastructure/README.md) directory describes internal endpoints and servers. `ServerDB2` and `Client-Linux2` are clones used for multi-host SSH validation. The older `victim-server/` directory is retained as historical documentation and is not the primary target of the latest validations.
 
 ### Evidence
 
-[`evidence/`](evidence/README.md) contiene soltanto evidenze ridotte e sanificate: alert selezionati, estratti di log, risultati dei test e tabelle. Non è un archivio completo dei log del laboratorio.
+[`evidence/`](evidence/README.md) contains only reduced and sanitized evidence: selected alerts, log excerpts, test results, and tables. It is not a complete archive of laboratory logs.
 
-## File principali dell'aggiornamento
+## Main files in this update
 
 ### Zeek
 
@@ -145,7 +145,7 @@ blue-team/wazuh/rules/005_zeek_scanning_correlation.xml
 blue-team/wazuh/rules/9999_ssh_bruteforce_correlation.xml
 ```
 
-### Active Response e AppArmor
+### Active Response and AppArmor
 
 ```text
 blue-team/wazuh/active-response/routeros_quarantine.py
@@ -155,25 +155,25 @@ blue-team/apparmor/profiles/opt.inventario_service.inventario_c
 infrastructure/server-db/inventario-service/
 ```
 
-## Sanificazione
+## Sanitization
 
-Non vengono pubblicati:
+The following are not published:
 
 - `client.keys`, `authd.pass`;
-- chiavi SSH private;
-- password e token;
-- webhook firmati;
-- configurazioni RouterOS contenenti credenziali;
-- PCAP completi e log grezzi integrali;
-- payload, malware o exploit riutilizzabili;
-- backup e snapshot delle VM.
+- private SSH keys;
+- passwords and tokens;
+- signed webhooks;
+- RouterOS configurations containing credentials;
+- full PCAPs and complete raw logs;
+- reusable payloads, malware, or exploits;
+- VM backups and snapshots.
 
-Il webhook presente nell'export del Manager è sostituito da un placeholder.
+The webhook present in the Manager export has been replaced with a placeholder.
 
-## Note sui limiti
+## Limitations
 
-Questo repository descrive un **laboratorio sperimentale**, non una baseline di produzione. Le soglie Zeek, le finestre Wazuh e la policy RouterOS sono state scelte per il cyber range e devono essere rivalutate prima di un utilizzo operativo. In particolare, i test fan-out/fan-in SSH sono sequenziali e sono stati distanziati per non interferire con l'`ignore` della regola stock Wazuh.
+This repository documents an **experimental laboratory**, not a production baseline. Zeek thresholds, Wazuh windows, and the RouterOS policy were selected for the cyber range and must be reassessed before operational use. In particular, the SSH fan-out/fan-in tests were sequential and were spaced apart to avoid interference from the stock Wazuh rule `ignore` interval.
 
-## Licenza
+## License
 
-GPL-3.0. Vedere [`LICENSE`](LICENSE).
+GPL-3.0. See [`LICENSE`](LICENSE).

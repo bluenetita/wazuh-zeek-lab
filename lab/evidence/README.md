@@ -1,43 +1,43 @@
 # Evidence
 
-Questa directory contiene evidenze **ridotte e sanificate** dei risultati osservati nel cyber range. La documentazione degli scenari descrive il test; `evidence/` conserva i dati necessari a supportarne l'esito senza pubblicare archivi grezzi completi.
+This directory contains **reduced and sanitized** evidence from results observed in the cyber range. Scenario documentation explains each test; `evidence/` retains the data required to support the result without publishing complete raw archives.
 
-## Evidenze disponibili
+## Available evidence
 
-| Directory | Contenuto |
+| Directory | Contents |
 |---|---|
-| `reverse-shell/` | controllo negativo e collegamenti alla campagna reverse shell |
-| `privilege-escalation/` | evidenze host-based già presenti |
-| `apparmor/2026-10-01-baseline/` | prima serie complain/enforce |
-| `apparmor/2026-10-servicefix/` | serie finale AppArmor 5 complain + 5 enforce |
-| `routeros-ar/2026-10-01/` | 5 run OFF + 5 ON, probe, alert selezionati e metriche |
-| `ssh-bruteforce/` | campioni Zeek/Wazuh e matrice dei test multi-host |
+| `reverse-shell/` | negative control and links to the reverse-shell campaign |
+| `privilege-escalation/` | existing host-based evidence |
+| `apparmor/2026-10-01-baseline/` | first complain/enforce series |
+| `apparmor/2026-10-servicefix/` | final AppArmor series: 5 complain + 5 enforce |
+| `routeros-ar/2026-10-01/` | 5 OFF + 5 ON runs, probes, selected alerts, and metrics |
+| `ssh-bruteforce/` | Zeek/Wazuh samples and multi-host test matrix |
 
-## Criteri di pubblicazione
+## Publication criteria
 
-Sono ammessi:
+The repository may include:
 
-- estratti di log strettamente necessari;
-- alert Wazuh selezionati;
-- JSONL/TSV ridotti;
-- snapshot di policy senza segreti;
-- metriche aggregate;
-- note di validazione.
+- strictly necessary log excerpts;
+- selected Wazuh alerts;
+- reduced JSONL/TSV data;
+- policy snapshots without secrets;
+- aggregate metrics;
+- validation notes.
 
-Non vengono pubblicati:
+The repository does not include:
 
-- log completi del sistema;
-- PCAP completi;
-- password, token e chiavi;
-- dump di processi o journal integrali;
-- configurazioni private del router;
-- dati personali o file runtime non necessari.
+- complete system logs;
+- full PCAP captures;
+- passwords, tokens, or keys;
+- complete process dumps or journal exports;
+- private router configurations;
+- personal data or unnecessary runtime files.
 
-## Relazione con `scenarios/`
+## Relationship with `scenarios/`
 
 ```text
-scenarios/ -> cosa è stato testato e come interpretarlo
-evidence/  -> cosa è stato osservato nelle prove
+scenarios/ -> what was tested and how to interpret it
+evidence/  -> what was observed during the tests
 ```
 
-Le assenze di alert vengono descritte solo quando il test ha anche verificato che prerequisiti, coppie IP e altri eventi necessari fossero realmente presenti.
+An alert absence is documented as a negative result only when the test also verified that the required prerequisites, IP pairs, and other necessary events were actually present.

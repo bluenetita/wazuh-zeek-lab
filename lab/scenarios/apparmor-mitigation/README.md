@@ -1,45 +1,45 @@
-# AppArmor Mitigation - servizio inventario
+# AppArmor Mitigation - Inventory Service
 
-Scenario di hardening del servizio vulnerabile eseguito su ServerDB mediante un profilo AppArmor dedicato e confronto controllato tra modalità complain ed enforce.
+Hardening scenario for the vulnerable service running on ServerDB using a dedicated AppArmor profile and a controlled comparison between complain and enforce modes.
 
-## Componenti
+## Components
 
-- sorgente: [`../../infrastructure/server-db/inventario-service/inventario.c`](../../infrastructure/server-db/inventario-service/inventario.c)
-- unit systemd: [`../../infrastructure/server-db/inventario-service/inventario-terminale.service`](../../infrastructure/server-db/inventario-service/inventario-terminale.service)
-- profilo: [`../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c`](../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c)
+- source: [`../../infrastructure/server-db/inventario-service/inventario.c`](../../infrastructure/server-db/inventario-service/inventario.c)
+- systemd unit: [`../../infrastructure/server-db/inventario-service/inventario-terminale.service`](../../infrastructure/server-db/inventario-service/inventario-terminale.service)
+- profile: [`../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c`](../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c)
 
-La unit esegue il servizio come `inv-user`, con working directory `/opt/inventario_service` e capability necessaria al bind della porta configurata.
+The unit runs the service as `inv-user`, with working directory `/opt/inventario_service` and the capability required to bind the configured port.
 
-## Metodo
+## Method
 
-Le prove confrontano la stessa operazione in due stati:
+The tests compare the same operation in two states:
 
 ```text
-complain -> registra la violazione senza bloccarla
-enforce  -> applica la policy e nega ciò che non è autorizzato
+complain -> record the policy violation without blocking it
+enforce  -> apply the policy and deny unauthorized behavior
 ```
 
-Per ogni prova vengono osservati stato del profilo, decisione AppArmor, record Audit/SYSCALL, stato del servizio e controllo di disponibilità.
+Each run observes the profile state, AppArmor decision, Audit/SYSCALL record, service state, and availability check.
 
-## Serie finale `servicefix`
+## Final `servicefix` series
 
-Evidenze: [`../../evidence/apparmor/2026-10-servicefix/README.md`](../../evidence/apparmor/2026-10-servicefix/README.md).
+Evidence: [`../../evidence/apparmor/2026-10-servicefix/README.md`](../../evidence/apparmor/2026-10-servicefix/README.md).
 
-Risultato su 5 coppie complain/enforce:
+Results across 5 complain/enforce pairs:
 
-| Modalità | `/usr/bin/dash` | SYSCALL | Alert Wazuh |
+| Mode | `/usr/bin/dash` | SYSCALL | Wazuh alert |
 |---|---|---|---|
-| complain | ALLOWED 5/5 | `success=yes`, `exit=0` | non usato come prova di blocco |
-| enforce | DENIED 5/5 | `success=no`, `exit=-13` | `130920` nelle 5 prove |
+| complain | ALLOWED 5/5 | `success=yes`, `exit=0` | not used as evidence of blocking |
+| enforce | DENIED 5/5 | `success=no`, `exit=-13` | `130920` in all 5 runs |
 
-Nella serie finale il servizio risulta `active`, il Main PID rimane invariato e il controllo TCP locale restituisce `rc=0` prima e dopo in tutte le prove.
+In the final series, the service remains `active`, the Main PID remains unchanged, and the local TCP check returns `rc=0` before and after in every run.
 
-Il controllo di disponibilità verifica stato systemd e raggiungibilità TCP, non una transazione completa del menu applicativo.
+The availability check verifies systemd state and TCP reachability; it does not execute a complete application-menu transaction.
 
-## Serie precedente
+## Previous series
 
-[`../../evidence/apparmor/2026-10-01-baseline/README.md`](../../evidence/apparmor/2026-10-01-baseline/README.md) conserva una serie precedente con decisioni complain/enforce coerenti, ma con variazione del PID tra controlli. Per questo non viene usata per affermare continuità del processo.
+[`../../evidence/apparmor/2026-10-01-baseline/README.md`](../../evidence/apparmor/2026-10-01-baseline/README.md) retains an earlier series with consistent complain/enforce decisions but PID changes between checks. It is therefore not used to claim process continuity.
 
-## Interpretazione
+## Interpretation
 
-Il risultato dimostra che la policy AppArmor può bloccare l'esecuzione non autorizzata osservata mantenendo disponibile il servizio nel test finale. Non dimostra che il profilo copra ogni possibile vettore né che costituisca una policy completa di produzione.
+The result demonstrates that the AppArmor policy can block the observed unauthorized execution while keeping the service available in the final test. It does not demonstrate coverage of every possible vector or establish the profile as a complete production policy.

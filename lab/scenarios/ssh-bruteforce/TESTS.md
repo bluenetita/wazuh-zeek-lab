@@ -1,45 +1,31 @@
-# Test SSH: risultati e procedura di regressione
+# SSH Tests: Results and Regression Procedure
 
-## Risultati osservati
+## Observed results
 
-I risultati dei test reali sono riepilogati in
-[observed-test-summaries.jsonl](../../evidence/ssh-bruteforce/observed-test-summaries.jsonl).
+Results from the real tests are summarized in [observed-test-summaries.jsonl](../../evidence/ssh-bruteforce/observed-test-summaries.jsonl).
 
-| Test | Sequenza osservata (timestamp del Manager, UTC) | Esito osservato |
+| Test | Observed sequence (Manager timestamp, UTC) | Observed result |
 |---|---|---|
-| Coppia positiva | 05/10 16:37:09.654 `120936` A1->V1; 16:37:42.265 login A1->V1 | `120937` |
-| Destinazione diversa | 06/10 14:40:12.506 `120936` A1->V1; 14:40:44.742 login A1->V2 | `5715`; nessuna `120937` nell'estratto interrogato |
-| Sorgente diversa | 06/10 15:33:10.707 `120936` A1->V1; 15:33:39.357 login A2->V1 | `5715`; nessuna `120937` nell'estratto interrogato |
-| Fan-out | 06/10 16:03:46.755 coppia A1->V1; 16:05:58.757 A1->V2 | `120940` |
-| Fan-in | 06/10 16:08:44.770 coppia A1->V1; 16:10:44.777 A2->V1 | `120941` |
-| Indipendenza | 06/10 16:13:22.790 A1->V1; 16:15:18.797 A2->V2 | Due `120939`; nessuna `120940/120941` nell'estratto |
+| Positive pair | 05/10 16:37:09.654 `120936` A1->V1; 16:37:42.265 login A1->V1 | `120937` |
+| Different destination | 06/10 14:40:12.506 `120936` A1->V1; 14:40:44.742 login A1->V2 | `5715`; no `120937` in the queried excerpt |
+| Different source | 06/10 15:33:10.707 `120936` A1->V1; 15:33:39.357 login A2->V1 | `5715`; no `120937` in the queried excerpt |
+| Fan-out | 06/10 16:03:46.755 pair A1->V1; 16:05:58.757 A1->V2 | `120940` |
+| Fan-in | 06/10 16:08:44.770 pair A1->V1; 16:10:44.777 A2->V1 | `120941` |
+| Independence | 06/10 16:13:22.790 A1->V1; 16:15:18.797 A2->V2 | Two `120939`; no `120940/120941` in the excerpt |
 
-Non sono disponibili misure di recall/precision, numero sufficiente di repliche
-per significativita' statistica o una prova simultanea delle due coppie. La matrice
-certifica il risultato dei casi mostrati, non tutti i comportamenti possibili.
+No recall/precision measurements, statistically meaningful replication count, or simultaneous two-pair test are available. The matrix establishes the behavior of the shown cases, not all possible behavior.
 
-## Condizioni della prova
+## Test conditions
 
-VM: A1 `10.3.20.2`, A2 `10.3.20.4`, V1 `10.3.30.3`, V2 `10.3.30.4`.
-I due server avevano agent Wazuh distinti e normalizzazione di `dstip` verificata.
-AR di quarantena disattivata durante i test di sola detection. Verificare lo stato
-reale prima di ripetere, mantenendo accesso alla console Proxmox.
+VMs: A1 `10.3.20.2`, A2 `10.3.20.4`, V1 `10.3.30.3`, V2 `10.3.30.4`. The two servers had distinct Wazuh agents, and `dstip` normalization was verified. Quarantine Active Response was disabled during detection-only testing. Verify the actual state before repeating a test and retain Proxmox console access.
 
-Per fan-out, fan-in e indipendenza: due sequenze separate da almeno 70 secondi,
-completate entro 900 secondi. Il Manager era riavviato tra i test per azzerare lo
-stato Wazuh. Un riavvio non e' innocuo in produzione e **non azzera lo stato Zeek**.
-Non riavviare il Manager tra le due coppie dello stesso test.
+For fan-out, fan-in, and independence: use two sequences separated by at least 70 seconds and complete them within 900 seconds. The Manager was restarted between tests to clear Wazuh correlation state. A restart is not harmless in production and **does not clear Zeek state**. Do not restart the Manager between the two pairs of the same test.
 
-La soglia address scan e' stata portata da 2 a 20. Nel sorgente di questa documentazione
-20 e' il valore presente; e' un valore del laboratorio, non una baseline universale.
-Il vecchio comando che contatta due IP non riproduce piu' lo scan con soglia 20.
-Per ripetere la catena scan->SSH scegliere un test autorizzato coerente con la soglia,
-o un profilo di test separato, documentando il cambiamento. Non falsificare un evento
-`100918` ne' considerare un mancato prerequisito come un negative test riuscito.
+The address-scan threshold was changed from 2 to 20. The source included with this documentation contains 20; this is a laboratory value, not a universal baseline. The previous command that contacted two IP addresses no longer reproduces a scan with threshold 20. To repeat the scan->SSH chain, use an authorized test consistent with the configured threshold or a separate documented test profile. Do not fabricate a `100918` event or treat a missing prerequisite as a successful negative test.
 
-## Un tentativo controllato
+## One controlled attempt
 
-Sul client autorizzato, senza privilegi amministrativi:
+From the authorized client, without administrative privileges:
 
 ```bash
 ssh -o PreferredAuthentications=password \
@@ -49,27 +35,14 @@ ssh -o PreferredAuthentications=password \
     wazuh_lab_test@10.3.30.3
 ```
 
-Inserire intenzionalmente una password errata su un account di test non produttivo.
-La prima connessione richiede la verifica della chiave host; non disabilitare tale
-verifica. L'esito client atteso e' `Permission denied`, non `Connection timed out`.
-Ripetere solo quanto necessario per le soglie previste nel laboratorio. Cinque
-connessioni non equivalgono per definizione a otto eventi `5710`: vanno verificati i
-match reali (una connessione puo' emettere `Invalid user` e `Failed password`).
+Intentionally enter an incorrect password for a non-production test account. The first connection requires host-key verification; do not disable it. The expected client outcome is `Permission denied`, not `Connection timed out`. Repeat only as needed to reach the laboratory thresholds. Five connections do not necessarily equal eight `5710` events: verify the actual rule matches because one connection may emit both `Invalid user` and `Failed password` records.
 
-## Criteri per i negativi
+## Criteria for negative tests
 
-Un negative test e' valido soltanto se prima esiste un antecedente fresco per la
-coppia A1->V1 e poi viene osservato il login della coppia differente, con campi
-correttamente decodificati. L'assenza dell'alert finale da sola non basta. Per la
-prova di indipendenza occorrono entrambe le pair confirmation, non solo l'assenza
-di fan-out/fan-in.
+A negative test is valid only if there is first a fresh antecedent for A1->V1 and then a login for the different pair is observed with correctly decoded fields. Absence of the final alert alone is insufficient. The independence test requires both pair confirmations, not only the absence of fan-out/fan-in.
 
-I test sintetici si tengono in sessioni `wazuh-logtest` separate dai risultati reali.
-Non aggiungere log inventati ad `auth.log` o ai log custom per simulare evidenze.
+Synthetic tests should be kept in `wazuh-logtest` sessions separate from real results. Do not add fabricated records to `auth.log` or custom logs to simulate evidence.
 
-## Limiti da mantenere nel README
+## Limitations that should remain documented
 
-Il controllo `ignore=60`, il gruppo esterno `ssh_pair_confirmed`, l'interazione con
-`120936` deve essere interpretata insieme alla detection di scanning e alla coppia SSH confermata.
-Attendere 70 s e aumentare una soglia isolano i test, ma non dimostrano che le
-correlazioni convivano senza interferenze sotto traffico simultaneo.
+The `ignore=60` behavior, the outer `ssh_pair_confirmed` group, and interaction with `120936` must be interpreted together with scanning detection and the confirmed SSH pair. Waiting 70 seconds and increasing a threshold isolates the tests, but it does not demonstrate interference-free correlation under simultaneous traffic.

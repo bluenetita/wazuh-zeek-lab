@@ -1,16 +1,9 @@
-# AppArmor: serie precedente al servicefix
+# AppArmor: pre-servicefix series
 
-La [matrice originale](apparmor_runs.original.tsv) contiene 5 coppie complain/enforce.
-Gli [eventi selezionati](selected_audit_events.log) confermano ALLOWED in 5/5 prove
-complain e DENIED in 5/5 enforce. I [dati runtime verificati](verified_runs.jsonl)
-mostrano pero' **Main PID diverso prima/dopo in tutte le 10 prove**.
+The [original matrix](apparmor_runs.original.tsv) contains 5 complain/enforce pairs. The [selected events](selected_audit_events.log) confirm ALLOWED in 5/5 complain runs and DENIED in 5/5 enforce runs. The [verified runtime data](verified_runs.jsonl), however, show a **different Main PID before and after in all 10 runs**.
 
-Il servizio risultava active a entrambi i controlli e il controllo TCP restituiva rc=0,
-ma questo non dimostra assenza di riavvii. Non dedurre la causa del cambio di PID
-soltanto dai due campioni. La successiva [serie servicefix](../2026-10-servicefix/README.md)
-mostra invece PID invariato in 10/10 prove e dispone del sorgente C associato.
-Le due serie sono pubblicate separatamente, non aggregate come venti repliche omogenee.
+The service was `active` at both checks and the TCP availability check returned `rc=0`, but this does not demonstrate the absence of restarts. The cause of the PID change must not be inferred from only those two observations. The later [servicefix series](../2026-10-servicefix/README.md) instead shows an unchanged PID in 10/10 runs and includes the associated C source.
 
-I [cinque alert enforce 130920](selected_wazuh_alerts.jsonl) sono proiezioni selezionate.
-La matrice originale conserva le limitazioni `not_independently_measured`;
-`verified_runs.jsonl` contiene i valori verificati utilizzati nel riepilogo.
+The two series are published separately and are not aggregated as twenty homogeneous replications.
+
+The [five enforce alerts with rule 130920](selected_wazuh_alerts.jsonl) are selected projections. The original matrix retains the `not_independently_measured` limitations; `verified_runs.jsonl` contains the verified values used in the summary.

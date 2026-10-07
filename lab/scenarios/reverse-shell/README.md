@@ -1,24 +1,24 @@
 # Reverse Shell
 
-Scenario di detection e correlazione di connessioni compatibili con reverse shell tramite telemetria Zeek e Wazuh, con integrazione Auditd lato endpoint e test di containment RouterOS.
+Scenario for detection and correlation of connections compatible with reverse-shell behavior using Zeek and Wazuh telemetry, with endpoint-side Auditd integration and RouterOS containment validation.
 
-## Obiettivo
+## Objective
 
-Correlare segnali differenti senza trattare una singola euristica di rete come prova definitiva. La pipeline usa eventi di connessione Zeek, movement, segnali host-based e regole Wazuh.
+Correlate different signals without treating a single network heuristic as definitive proof. The pipeline uses Zeek connection events, movement events, host-based signals, and Wazuh correlation rules.
 
-## Componenti
+## Components
 
 - Zeek custom logs: `possible_malware.log`, `reverse_shell_live.log`, `reverse_shell_movement.log`, `reverse_shell_final.log`;
 - `reverse_shell_movement.zeek` v2;
-- decoder Auditd `000_audit_saddr_decoder.xml`;
-- correlazioni in `004_zeek_auditd_correlation.xml`;
-- correlazioni scanning successive in `005_zeek_scanning_correlation.xml`;
-- evidence collector opzionale;
-- Active Response RouterOS, validata separatamente OFF/ON.
+- Auditd decoder `000_audit_saddr_decoder.xml`;
+- correlations in `004_zeek_auditd_correlation.xml`;
+- downstream scanning correlations in `005_zeek_scanning_correlation.xml`;
+- optional evidence collector;
+- RouterOS Active Response, validated separately in OFF/ON conditions.
 
 ## Movement detector v2
 
-La condizione principale è:
+The main condition is:
 
 ```text
 duration >= 30 s
@@ -26,7 +26,7 @@ orig_pkts > 10
 resp_pkts > 10
 ```
 
-Le vecchie soglie sulle dimensioni medie dei pacchetti sono diagnostiche e non bloccano più l'evento. Il detector rivaluta lo stato periodicamente e su nuovi pacchetti e limita a un evento movement per connessione.
+The older average-packet-size thresholds are diagnostic only and no longer block event generation. The detector reevaluates state periodically and on new packets and limits output to one movement event per connection.
 
 File:
 
@@ -34,29 +34,29 @@ File:
 blue-team/zeek/site/custom_scripts/reverse_shell/reverse_shell_movement.zeek
 ```
 
-## Correlazione host/rete
+## Host/network correlation
 
-Il Client-Linux raccoglie eventi Auditd relativi alle connessioni e li arricchisce con l'IP locale. Il decoder estrae i campi utili alla correlazione con Zeek. La semantica degli IP nello scenario reverse shell è diversa da quella SSH inbound: l'host compromesso può essere il `src_ip` della connessione outbound.
+Client-Linux collects Auditd events related to connections and enriches them with the local host IP. The decoder extracts fields used for correlation with Zeek. IP semantics in the reverse-shell scenario differ from inbound SSH: the compromised host may be the outbound connection `src_ip`.
 
-## Test recuperati
+## Recovered tests
 
-Sono conservati dieci run della campagna utilizzata anche per il confronto Active Response, con record Zeek selezionati, alert Wazuh ed esiti OFF/ON. È presente inoltre un controllo negativo storico separato.
+Ten runs from the campaign also used for the Active Response comparison are retained, including selected Zeek records, Wazuh alerts, and OFF/ON outcomes. A separate historical negative control is also included.
 
-Evidenze:
+Evidence:
 
 - [`../../evidence/routeros-ar/2026-10-01/README.md`](../../evidence/routeros-ar/2026-10-01/README.md)
 - [`../../evidence/reverse-shell/2026-10-01-negative-control/README.md`](../../evidence/reverse-shell/2026-10-01-negative-control/README.md)
 
-Non viene affermato che ogni run abbia una sequenza completa di tutti i log custom né che l'euristica riconosca tutte le varianti di reverse shell.
+The repository does not claim that every run contains a complete sequence of every custom log or that the heuristic detects every reverse-shell variant.
 
 ## Containment
 
-La quarantena RouterOS è documentata in [`../active-response/README.md`](../active-response/README.md). Nell'export `ossec.conf` pubblicato il blocco che attiverebbe automaticamente la quarantena è commentato.
+RouterOS quarantine is documented in [`../active-response/README.md`](../active-response/README.md). In the published `ossec.conf` export, the block that would automatically enable quarantine is commented out.
 
-## Limiti
+## Limitations
 
-- le euristiche dipendono dalla visibilità del mirror;
-- copie/ritrasmissioni possono influenzare contatori packet-based;
-- porte consentite e reti escluse possono creare punti ciechi;
-- Zeek non osserva direttamente il processo locale che ha aperto la connessione;
-- l'attribuzione finale richiede la combinazione con telemetria host-based.
+- heuristics depend on mirror visibility;
+- duplicates/retransmissions can affect packet-based counters;
+- allowed ports and excluded networks can create blind spots;
+- Zeek does not directly observe the local process that opened a connection;
+- final attribution requires correlation with host-based telemetry.

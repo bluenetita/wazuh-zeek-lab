@@ -1,8 +1,8 @@
 # Zeek
 
-Zeek è il sensore Network Security Monitoring del cyber range. Riceve il traffico mirrorato da Open vSwitch e produce sia log standard sia log custom inviati a Wazuh.
+Zeek is the Network Security Monitoring sensor for the cyber range. It receives traffic mirrored by Open vSwitch and produces both standard logs and custom logs forwarded to Wazuh.
 
-## Punto di osservazione
+## Observation point
 
 ```text
 VLAN 10 / 20 / 30
@@ -16,22 +16,22 @@ VLAN 10 / 20 / 30
    Wazuh Agent
 ```
 
-L'interfaccia di mirror usata nel laboratorio è `ens19.999`.
+The mirror interface used in the lab is `ens19.999`.
 
-## File principali
+## Main files
 
-| File | Funzione |
+| File | Function |
 |---|---|
-| `site/local.zeek` | JSON logging e caricamento degli script custom |
+| `site/local.zeek` | JSON logging and loading of custom scripts |
 | `site/custom_scripts/reverse_shell/reverse_shell_movement.zeek` | movement detector v2 |
-| `site/custom_scripts/scanning/address_scan.zeek` | TCP address scan |
-| `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | rilevamento SSH per coppia sorgente/destinazione |
+| `site/custom_scripts/scanning/address_scan.zeek` | TCP address-scan detector |
+| `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | SSH detection keyed by source/destination pair |
 
-Gli altri script già presenti nel repository (`reverse_shell.zeek`, malware/download, scanning loader, logging, exfiltration e altri detector) vanno conservati.
+Other scripts already present in the repository (`reverse_shell.zeek`, malware/download detection, scanning loader, logging, exfiltration, and other detectors) should be preserved.
 
-## Log custom
+## Custom logs
 
-I log custom sono scritti sotto `/var/log/zeek-custom/`. Quelli più rilevanti sono:
+Custom logs are written under `/var/log/zeek-custom/`. The most relevant are:
 
 ```text
 possible_malware.log
@@ -42,11 +42,11 @@ scanning.log
 ssh_bruteforce.log
 ```
 
-Il movement detector v2 mantiene anche un log diagnostico dedicato per le verifiche sperimentali.
+The movement detector v2 also maintains a dedicated diagnostic log for experimental verification.
 
-## Reverse shell movement v2
+## Reverse-shell movement v2
 
-Il detector considera TCP verso destinazioni non appartenenti alle subnet interne escluse e applica la logica principale:
+The detector considers TCP connections toward destinations outside the excluded internal subnets and applies the main condition:
 
 ```text
 duration >= 30 s
@@ -54,19 +54,19 @@ orig_pkts > 10
 resp_pkts > 10
 ```
 
-Le vecchie medie di dimensione pacchetto sono mantenute solo come diagnostica. La connessione viene rivalutata periodicamente e alla ricezione di pacchetti; una stessa connessione emette al massimo un evento movement.
+The older average-packet-size values are retained only for diagnostics. The connection is reevaluated periodically and when packets are observed; each connection emits at most one movement event.
 
-I contatori packet-based possono essere influenzati da copie del mirror o ritrasmissioni: l'euristica non equivale a un'identificazione certa di una reverse shell.
+Packet-based counters can be affected by mirror duplicates or retransmissions, so the heuristic is not equivalent to definitive reverse-shell identification.
 
 ## SSH brute force
 
-Lo script SSH mantiene lo stato per:
+The SSH script maintains state for:
 
 ```text
 [src_ip, dest_ip, dest_port]
 ```
 
-Quando Zeek dispone di un esito di autenticazione inferito, usa il relativo percorso. Quando l'esito non è disponibile sul traffico cifrato, il fallback conta connessioni SSH ripetute e produce un candidato con, per esempio:
+When Zeek has an inferred authentication result, it uses that path. When the outcome is unavailable on encrypted traffic, the fallback counts repeated SSH connections and produces a candidate such as:
 
 ```text
 failed_connections = 0
@@ -75,37 +75,37 @@ auth_attempts = 0
 detection_reason = repeated_ssh_connections_unknown_auth
 ```
 
-Questo **non** significa che Zeek abbia osservato cinque password errate. La conferma dei fallimenti proviene dai log `sshd` raccolti da Wazuh.
+This **does not** mean that Zeek observed five incorrect passwords. Authentication-failure confirmation comes from `sshd` logs collected by Wazuh.
 
 ## Scanning
 
-Valori presenti nello snapshot finale:
+Values in the final snapshot:
 
-| Detector | Soglia | Finestra |
+| Detector | Threshold | Window |
 |---|---:|---:|
-| TCP address scan | 20 target | 60 s |
-| TCP port scan | 100 porte | 60 s |
-| UDP port scan | 50 porte | 60 s |
-| ARP host scan | 20 target | 60 s |
-| ICMP host scan | 2 target | 60 s |
+| TCP address scan | 20 targets | 60 s |
+| TCP port scan | 100 ports | 60 s |
+| UDP port scan | 50 ports | 60 s |
+| ARP host scan | 20 targets | 60 s |
+| ICMP host scan | 2 targets | 60 s |
 
-La soglia di `address_scan` è stata riportata da 2 a 20 perché il valore di test classificava anche il semplice contatto SSH verso due server come scan. Si tratta di tuning del laboratorio, non di una baseline universale.
+The `address_scan` threshold was restored from 2 to 20 because the test value also classified simple SSH contact with two servers as a scan. This is lab tuning, not a universal baseline.
 
-## Qualità della cattura
+## Capture quality
 
-Nelle verifiche su `ens19.999` sono stati osservati GRO `off`, GSO `on` e LRO `off [fixed]`. La repository non include una unit persistente non verificata per forzare tali valori dopo reboot.
+During checks on `ens19.999`, GRO was observed as `off`, GSO as `on`, and LRO as `off [fixed]`. The repository does not include an unverified persistent unit that forces these values after reboot.
 
-`ignore_checksums=T` è presente nella configurazione di laboratorio. Va rivalutato in un deployment differente.
+`ignore_checksums=T` is present in the laboratory configuration and should be reassessed in a different deployment.
 
-## Verifiche operative
+## Operational checks
 
 ```bash
 sudo /opt/zeek/bin/zeekctl check
 sudo /opt/zeek/bin/zeekctl status
 ```
 
-Applicare `zeekctl deploy` solo quando si vuole effettivamente ricaricare il sensore; un deploy può azzerare stato runtime utile ai test.
+Run `zeekctl deploy` only when the sensor should actually be reloaded; a deploy can reset runtime state that may be relevant to testing.
 
-## Limiti
+## Limitations
 
-Zeek non vede direttamente processi, comandi locali, modifiche al filesystem o il contenuto applicativo cifrato. Per questi aspetti il progetto combina Zeek con Wazuh, Auditd e, negli scenari di mitigazione, AppArmor.
+Zeek does not directly observe local processes, local commands, filesystem changes, or encrypted application payloads. For those aspects, the project combines Zeek with Wazuh, Auditd, and, in mitigation scenarios, AppArmor.
