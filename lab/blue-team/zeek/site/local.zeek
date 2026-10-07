@@ -135,3 +135,6 @@ redef ignore_checksums=T;
 
 # Host scan (nmap)
 @load custom_scripts/scanning
+
+# SSH_Bruteforce
+@load custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek

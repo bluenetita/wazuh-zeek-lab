@@ -1,20 +1,30 @@
-# Security Scenarios
+# Scenarios
 
-This directory contains controlled validation scenarios for the monitoring and response architecture.
+Questa directory raccoglie gli scenari effettivamente documentati nel cyber range. Ogni scenario collega obiettivo, sistemi coinvolti, detection e risultati osservati; payload, exploit e materiale offensivo riutilizzabile non vengono pubblicati.
 
-| Scenario | Main telemetry | Validation goal |
-|---|---|---|
-| `reverse-shell/` | Zeek, Auditd, Wazuh correlation, Active Response | Correlate network/endpoint evidence and test containment |
-| `privilege-escalation/` | Auditd keys, Wazuh privilege rules, FIM/system context | Detect privileged/post-exploitation execution |
-| `data-exfiltration/` | Zeek baseline/custom JSON and Wazuh rules | Detect an authorized volume anomaly |
-| `network-scanning/` | Zeek scanning JSON and Wazuh `100915-100919` | Detect several scan patterns |
-| `apparmor-mitigation/` | AppArmor Audit events and Wazuh `1309xx` rules | Compare complain/enforce behavior |
-| `command-injection/` | ServerDB AppArmor/Audit effects | Demonstrate defensive visibility around the intentionally unsafe service |
-| `full-attack-chain/` | Multiple sources | Document the end-to-end defensive coverage and gaps |
-| `pivoting-ssh-bruteforce/` | Current coverage gap | Document later-stage activity without claiming a dedicated custom detector |
+## Scenari
 
-Each scenario should define objective, systems, prerequisites, safe descriptive actions, expected telemetry, decoder/rule IDs, interpretation, cleanup, limitations, and sanitized evidence.
+| Scenario | Directory | Stato | Componenti principali |
+|---|---|---|---|
+| Reverse Shell | `reverse-shell/` | Validato | Zeek, Auditd, Wazuh |
+| Privilege Escalation | `privilege-escalation/` | Validato | Auditd/Wazuh |
+| Network Scanning | `network-scanning/` | Validato | Zeek + Wazuh |
+| AppArmor Mitigation | `apparmor-mitigation/` | Validato | ServerDB + AppArmor + Wazuh |
+| Active Response | `active-response/` | Validato | Wazuh + RouterOS |
+| SSH Brute Force | `ssh-bruteforce/` | Validato | Zeek + sshd + Wazuh |
 
-## Safety
+## Flusso di osservabilità
 
-Do not publish weaponized payloads, credentials, private keys, raw logs, full PCAPs, malicious binaries, signed webhooks, or reusable offensive command sequences. Keep operational attack commands in private lab notes when necessary for authorized testing.
+```text
+Traffico di rete  -> Zeek -----------+
+                                      |
+Eventi host ------> Wazuh Agent ----> Wazuh Manager -> decoder/rules -> alert
+                                      |
+                                      +-> Active Response (se abilitata)
+```
+
+## Principio di validazione
+
+Le prove positive sono accompagnate, quando disponibili, da controlli negativi o confronti OFF/ON. Le evidenze ridotte sono conservate sotto [`../evidence/`](../evidence/README.md).
+
+Nel caso SSH la validazione usa due sorgenti e due vittime per verificare che la correlazione non mescoli sessioni di coppie differenti. Nel caso AppArmor la stessa operazione viene confrontata tra complain ed enforce. Nel caso RouterOS viene confrontato il comportamento con Active Response disabilitata e abilitata.

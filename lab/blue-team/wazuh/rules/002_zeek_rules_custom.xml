@@ -87,5 +87,64 @@
     <group>zeek_custom,zeek_scanning,icmp_host_scan,</group>
   </rule>
 
+  <!-- SSH bruteforce -->
+
+
+  <!--
+       Base rule for dedicated Zeek SSH JSON decoder.
+
+       ssh_bruteforce.log is transported with the zeek_ssh_json
+       prefix and decoded by zeek-ssh-json.
+
+       Level 0: grouping rule only, no standalone alert.
+  -->
+  <rule id="100922" level="0">
+    <decoded_as>zeek-ssh-json</decoded_as>
+    <location>/var/log/zeek-custom/ssh_bruteforce.log</location>
+    <field name="event_source">^zeek$</field>
+    <description>Zeek SSH dedicated JSON decoder base rule.</description>
+    <group>zeek_custom,ssh,</group>
+  </rule>
+  <!--
+       SSH brute-force activity detected by the custom Zeek
+       correlation script.
+  -->
+  <rule id="100920" level="8">
+    <if_sid>100900,100922</if_sid>
+
+    <location>/var/log/zeek-custom/ssh_bruteforce.log</location>
+
+    <field name="event_type">^ssh_bruteforce$</field>
+
+    <description>Zeek: SSH brute force detected from $(src_ip):$(src_port) to $(dest_ip):$(dest_port). Failed connections: $(failed_connections), authentication attempts: $(auth_attempts), detection reason: $(detection_reason).</description>
+
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+
+    <group>zeek_custom,ssh,ssh_bruteforce,authentication_attack,</group>
+  </rule>
+
+
+  <!--
+       Successful SSH authentication observed shortly after
+       Zeek detected brute-force activity from the same source.
+  -->
+  <rule id="100921" level="10">
+    <if_sid>100900,100922</if_sid>
+
+    <location>/var/log/zeek-custom/ssh_bruteforce.log</location>
+
+    <field name="event_type">^ssh_bruteforce_success$</field>
+
+    <description>Zeek: Successful SSH authentication after brute-force activity from $(src_ip):$(src_port) to $(dest_ip):$(dest_port). Previous failed connections: $(failed_connections), authentication attempts: $(auth_attempts).</description>
+
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+
+    <group>zeek_custom,ssh,ssh_bruteforce,authentication_success,possible_compromise,</group>
+  </rule>
+
 </group>
 

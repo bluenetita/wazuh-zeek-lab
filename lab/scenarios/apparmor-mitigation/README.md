@@ -1,29 +1,45 @@
-# AppArmor Mitigation Scenario
+# AppArmor Mitigation - servizio inventario
 
-## Objective
+Scenario di hardening del servizio vulnerabile eseguito su ServerDB mediante un profilo AppArmor dedicato e confronto controllato tra modalità complain ed enforce.
 
-Compare the same unsafe application behavior while the ServerDB inventory-service profile is in complain mode and enforce mode.
+## Componenti
 
-## Expected behavior
+- sorgente: [`../../infrastructure/server-db/inventario-service/inventario.c`](../../infrastructure/server-db/inventario-service/inventario.c)
+- unit systemd: [`../../infrastructure/server-db/inventario-service/inventario-terminale.service`](../../infrastructure/server-db/inventario-service/inventario-terminale.service)
+- profilo: [`../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c`](../../blue-team/apparmor/profiles/opt.inventario_service.inventario_c)
 
-### Complain mode
+La unit esegue il servizio come `inv-user`, con working directory `/opt/inventario_service` e capability necessaria al bind della porta configurata.
 
-Policy violations are recorded for analysis, but the profile does not enforce denial solely because it is in complain mode.
+## Metodo
 
-### Enforce mode
+Le prove confrontano la stessa operazione in due stati:
 
-Operations not granted by the profile are denied. The supplied laboratory evidence includes a denied shell-execution attempt for the inventory-service profile. Wazuh rule `130920` classifies blocked shell execution when the required decoded fields match.
+```text
+complain -> registra la violazione senza bloccarla
+enforce  -> applica la policy e nega ciò che non è autorizzato
+```
 
-## Defensive validation
+Per ogni prova vengono osservati stato del profilo, decisione AppArmor, record Audit/SYSCALL, stato del servizio e controllo di disponibilità.
 
-1. confirm AppArmor is loaded for the inventory service;
-2. confirm ServerDB sends `/var/log/audit/audit.log` to Wazuh;
-3. verify decoder `apparmor_audit`;
-4. verify base rule `130900`;
-5. verify the relevant specialized AppArmor rule;
-6. compare complain/enforce results;
-7. return the service/profile to the intended final lab state.
+## Serie finale `servicefix`
 
-## Evidence
+Evidenze: [`../../evidence/apparmor/2026-10-servicefix/README.md`](../../evidence/apparmor/2026-10-servicefix/README.md).
 
-See `evidence/apparmor/apparmor-shell-denied-sanitized.log`.
+Risultato su 5 coppie complain/enforce:
+
+| Modalità | `/usr/bin/dash` | SYSCALL | Alert Wazuh |
+|---|---|---|---|
+| complain | ALLOWED 5/5 | `success=yes`, `exit=0` | non usato come prova di blocco |
+| enforce | DENIED 5/5 | `success=no`, `exit=-13` | `130920` nelle 5 prove |
+
+Nella serie finale il servizio risulta `active`, il Main PID rimane invariato e il controllo TCP locale restituisce `rc=0` prima e dopo in tutte le prove.
+
+Il controllo di disponibilità verifica stato systemd e raggiungibilità TCP, non una transazione completa del menu applicativo.
+
+## Serie precedente
+
+[`../../evidence/apparmor/2026-10-01-baseline/README.md`](../../evidence/apparmor/2026-10-01-baseline/README.md) conserva una serie precedente con decisioni complain/enforce coerenti, ma con variazione del PID tra controlli. Per questo non viene usata per affermare continuità del processo.
+
+## Interpretazione
+
+Il risultato dimostra che la policy AppArmor può bloccare l'esecuzione non autorizzata osservata mantenendo disponibile il servizio nel test finale. Non dimostra che il profilo copra ogni possibile vettore né che costituisca una policy completa di produzione.

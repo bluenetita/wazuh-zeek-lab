@@ -1,6 +1,6 @@
 #include <tunables/global>
 
-/opt/inventario_service/inventario_c flags=(complain) {
+/opt/inventario_service/inventario_c {
   #include <abstractions/base>
   #include <abstractions/nameservice>
 

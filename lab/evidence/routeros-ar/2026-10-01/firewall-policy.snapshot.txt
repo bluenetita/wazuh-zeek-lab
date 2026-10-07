@@ -1,0 +1,79 @@
+ 0  D ;;; special dummy rule to show fasttrack counters
+      chain=forward action=passthrough 
+
+ 1    ;;; Allow Wazuh from pfSense
+      chain=forward action=accept protocol=tcp src-address=10.2.0.3 
+      dst-address=10.3.10.3 dst-port=1514,1515 log=yes log-prefix="" 
+
+ 2    ;;; FastTrack established/related
+      chain=forward action=fasttrack-connection 
+      connection-state=established,related 
+
+ 3    ;;; Accept established/related
+      chain=forward action=accept connection-state=established,related 
+
+ 4    ;;; Quarantena - Wazuh -> Quarantena
+      chain=forward action=accept protocol=tcp src-address-list=Trusted IP 
+      dst-address-list=Quarantine dst-port=22,1514 log=no log-prefix="" 
+
+ 5    ;;; Quarantena - Quarantena -> Wazuh
+      chain=forward action=accept protocol=tcp dst-address=10.3.10.3 
+      src-address-list=Quarantine dst-address-list=Trusted IP src-port="" 
+      dst-port=1514,1515 log=no log-prefix="" 
+
+ 6    ;;; Drop verso quarantena
+      chain=forward action=drop dst-address-list=Quarantine log=no 
+      log-prefix="" 
+
+ 7    ;;; Drop da quarantena
+      chain=forward action=drop src-address-list=Quarantine log=no 
+      log-prefix="" 
+
+ 8    ;;; VLAN10 -> VLAN20
+      chain=forward action=accept in-interface=vlan10 out-interface=vlan20 
+
+ 9    ;;; VLAN20 -> VLAN10
+      chain=forward action=accept in-interface=vlan20 out-interface=vlan10 
+
+10    ;;; VLAN10 -> VLAN30
+      chain=forward action=accept in-interface=vlan10 out-interface=vlan30 
+
+11    ;;; VLAN30 -> VLAN10
+      chain=forward action=accept in-interface=vlan30 out-interface=vlan10 
+
+12    ;;; VLAN20 -> VLAN30
+      chain=forward action=accept in-interface=vlan20 out-interface=vlan30 
+
+13    ;;; VLAN30 -> VLAN20
+      chain=forward action=accept in-interface=vlan30 out-interface=vlan20 
+
+14    ;;; VLAN10 -> WAN
+      chain=forward action=accept in-interface=vlan10 out-interface=ether1 
+
+15    ;;; VLAN20 -> WAN
+      chain=forward action=accept in-interface=vlan20 out-interface=ether1 
+
+16    ;;; VLAN30 -> WAN
+      chain=forward action=accept in-interface=vlan30 out-interface=ether1 
+
+17    ;;; VPN SSH to VLANS
+      chain=forward action=accept protocol=tcp src-address=10.8.0.0/24 
+      dst-address=10.3.0.0/16 dst-port=22 log=no log-prefix="" 
+
+18    ;;; VPN RDP to VLANS
+      chain=forward action=accept protocol=rdp src-address=10.8.0.0/24 
+      dst-address=10.3.0.0/16 log=no log-prefix="" 
+
+19    ;;; VPN HTTPS to VLANS
+      chain=forward action=accept protocol=tcp src-address=10.8.0.0/24 
+      dst-address=10.3.0.0/16 dst-address-list="" dst-port=443 log=no 
+      log-prefix="" 
+
+20    ;;; VPN HTTP to VLANS
+      chain=forward action=accept protocol=tcp src-address=10.8.0.0/24 
+      dst-address=10.3.0.0/16 dst-address-list="" dst-port=80 log=no 
+      log-prefix="" 
+
+21    ;;; Drop everything else
+      chain=forward action=drop 
+

@@ -1,0 +1,2 @@
+run_id	case_type	endpoint_a	endpoint_b	endpoint_precursor_rule	zeek_precursor_event	shared_destination	time_window_s	precursor_a_observed	precursor_b_observed	shared_target_match	forbidden_count	expected_result	observed_result	validity	passed	notes
+CORR-NEG-01	multi_host_same_target	10.3.20.2	10.3.30.3	110900	reverse_shell_live	10.2.0.2:22	90	true	true	true	0	VALID_PASS	VALID_PASS	valid	true	synthetic/benign correlation-control details excluded from evidence summary; forbidden_ids=none; missing=none

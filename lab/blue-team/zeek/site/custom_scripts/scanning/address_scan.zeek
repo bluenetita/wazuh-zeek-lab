@@ -6,7 +6,7 @@ export {
 
     # Numero minimo di host differenti contattati
     # sulla stessa porta TCP.
-    const threshold: count = 2 &redef;
+    const threshold: count = 20 &redef;
 
     # Finestra temporale.
     const scan_window: interval = 60secs &redef;

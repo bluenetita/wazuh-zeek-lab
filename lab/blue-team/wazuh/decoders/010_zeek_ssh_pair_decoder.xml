@@ -1,0 +1,49 @@
+<!--
+  Dedicated decoder for Zeek SSH brute-force telemetry.
+
+  Expected input:
+    zeek_ssh_json: {...}
+
+  Goals:
+    - preserve all original JSON fields through JSON_Decoder
+    - additionally expose:
+        srcip = attacker
+        dstip = victim
+-->
+
+<!--
+  Parent decoder.
+  It consumes only "zeek_ssh_" so that child decoders can process
+  the remaining "json: {...}" portion.
+-->
+<decoder name="zeek-ssh-json">
+  <prematch type="pcre2">^zeek_ssh_</prematch>
+</decoder>
+
+<!--
+  JSON child.
+  After the parent, the remaining input starts with:
+      json: {...}
+
+  This child consumes "json: " and passes only the JSON object
+  to JSON_Decoder.
+-->
+<decoder name="zeek-ssh-fields">
+  <parent>zeek-ssh-json</parent>
+  <prematch type="pcre2" offset="after_parent">^json:\s*</prematch>
+  <plugin_decoder offset="after_prematch">JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- Static Wazuh source IP alias -->
+<decoder name="zeek-ssh-fields">
+  <parent>zeek-ssh-json</parent>
+  <regex type="pcre2" offset="after_parent">^json:\s*\{.*"src_ip"\s*:\s*"([0-9]{1,3}(?:\.[0-9]{1,3}){3})"</regex>
+  <order>srcip</order>
+</decoder>
+
+<!-- Static Wazuh destination IP alias -->
+<decoder name="zeek-ssh-fields">
+  <parent>zeek-ssh-json</parent>
+  <regex type="pcre2" offset="after_parent">^json:\s*\{.*"dest_ip"\s*:\s*"([0-9]{1,3}(?:\.[0-9]{1,3}){3})"</regex>
+  <order>dstip</order>
+</decoder>

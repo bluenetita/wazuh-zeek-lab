@@ -1,0 +1,16 @@
+# /etc/systemd/system/inventario-terminale.service
+[Unit]
+Description=Servizio Inventario Testuale Vulnerabile
+After=network.target
+
+[Service]
+Type=simple
+User=inv-user
+WorkingDirectory=/opt/inventario_service
+ExecStart=/opt/inventario_service/inventario_c
+Restart=always
+# Permette a www-data di aprire la porta 80 senza essere root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

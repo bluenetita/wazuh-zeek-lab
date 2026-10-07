@@ -1,0 +1,10 @@
+Campaign: thesis_final_v218_20261001_01
+Generated UTC: 2026-10-01T16:47:24.411Z
+T_D all: n=10 mean_ms=33214.1 median_ms=32922.5 min_ms=31938.0 max_ms=35925.0
+T_AR ON: n=5 mean_ms=357.8 median_ms=359.0 min_ms=341.0 max_ms=372.0
+T_C ON: n=5 mean_ms=36744.0 median_ms=36868.0 min_ms=36269.0 max_ms=37017.0
+RouterOS OFF: runs=5 live=5 movement=5 eligible=5 active_response=0 quarantine=0 containment_confirmed=0
+RouterOS ON: runs=5 live=5 movement=5 eligible=5 active_response=5 quarantine=5 containment_confirmed=5
+AppArmor complain: runs=5 passed=5
+AppArmor enforce: runs=5 passed=5
+Negative correlation: runs=1 valid_pass=1 forbidden_fail=0 invalid=0

@@ -1,5 +1,7 @@
-# Victim Server
+# Victim Server - documentazione legacy
 
-This VM is an additional controlled target for laboratory scenarios.
+Questa directory viene mantenuta per conservare la documentazione di un target vulnerabile usato nelle fasi precedenti del cyber range.
 
-Document its operating system, network placement, services, Wazuh telemetry, scenario scope, and restoration procedure. Do not include exploitable production configurations, credentials, or malicious artifacts.
+**Stato attuale:** non è il target principale delle validazioni recenti descritte nello snapshot ottobre 2026. Gli scenari finali qui pubblicati usano soprattutto Client-Linux, ServerDB e i cloni Client-Linux2/ServerDB2 per i test multi-host SSH.
+
+Il contenuto storico non deve essere interpretato come requisito per riprodurre AppArmor, Active Response RouterOS o SSH Endpoint Normalizer.

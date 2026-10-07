@@ -8,7 +8,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120904 -> scanning -->
@@ -19,7 +19,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120907 -> scanning -->
@@ -30,7 +30,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120910 -> scanning -->
@@ -41,7 +41,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120914 -> scanning -->
@@ -52,7 +52,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120917 -> scanning -->
@@ -63,7 +63,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120921 -> scanning -->
@@ -74,7 +74,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
     <!-- 120924 -> scanning -->
@@ -85,7 +85,7 @@
 
         <description>Zeek: Network scanning detected after possible reverse shell activity. Compromised host / scanner IP: $(src_ip). Scan type: $(event_type)</description>
 
-        <group>zeek_custom,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
+        <group>zeek_custom,zeek_scanning,scan_correlation,post_compromise_reconnaissance,possible_compromise,</group>
     </rule>
 
 </group>

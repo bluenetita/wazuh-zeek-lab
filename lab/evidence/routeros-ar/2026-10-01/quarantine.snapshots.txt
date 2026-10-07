@@ -1,0 +1,99 @@
+# RS-OFF-01 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-OFF-01 after
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-01 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-01 after
+Flags: X - DISABLED, D - DYNAMIC 
+ 0   ;;; Wazuh rule 120911 - Possible REVERSE SHELL TRAFFIC detected caused by a
+possible Malware IP detected
+     list=Quarantine address=10.3.20.2 creation-time=2026-10-01 16:19:22 
+     dynamic=no 
+
+
+# RS-OFF-02 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-OFF-02 after
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-02 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-02 after
+Flags: X - DISABLED, D - DYNAMIC 
+ 0   ;;; Wazuh rule 120911 - Possible REVERSE SHELL TRAFFIC detected caused by a
+possible Malware IP detected
+     list=Quarantine address=10.3.20.2 creation-time=2026-10-01 16:24:20 
+     dynamic=no 
+
+
+# RS-OFF-03 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-OFF-03 after
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-03 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-03 after
+Flags: X - DISABLED, D - DYNAMIC 
+ 0   ;;; Wazuh rule 120911 - Possible REVERSE SHELL TRAFFIC detected caused by a
+possible Malware IP detected
+     list=Quarantine address=10.3.20.2 creation-time=2026-10-01 16:29:25 
+     dynamic=no 
+
+
+# RS-OFF-04 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-OFF-04 after
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-04 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-04 after
+Flags: X - DISABLED, D - DYNAMIC 
+ 0   ;;; Wazuh rule 120908 - Possible REVERSE SHELL TRAFFIC detected caused by a
+possible Malware IP detected
+     list=Quarantine address=10.3.20.2 creation-time=2026-10-01 16:34:26 
+     dynamic=no 
+
+
+# RS-OFF-05 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-OFF-05 after
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-05 before
+Flags: X - DISABLED, D - DYNAMIC 
+
+
+# RS-ON-05 after
+Flags: X - DISABLED, D - DYNAMIC 
+ 0   ;;; Wazuh rule 120908 - Possible REVERSE SHELL TRAFFIC detected caused by a
+possible Malware IP detected
+     list=Quarantine address=10.3.20.2 creation-time=2026-10-01 16:39:25 
+     dynamic=no 
+

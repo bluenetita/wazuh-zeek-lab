@@ -1,0 +1,7 @@
+# MODELLO NUOVO: non contiene la configurazione privata del router.
+# Configurare solo dopo aver revisionato routeros_quarantine.py.
+# La pubblicazione di questo file NON abilita alcuna Active Response.
+ROUTEROS_USER=wazuh-quarantine
+ROUTEROS_HOST=ROUTEROS_MANAGEMENT_ADDRESS
+ROUTEROS_SSH_KEY=/var/ossec/.ssh/routeros_quarantine
+QUARANTINE_LIST=Quarantine

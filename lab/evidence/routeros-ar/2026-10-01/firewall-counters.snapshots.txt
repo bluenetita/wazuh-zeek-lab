@@ -1,0 +1,999 @@
+# RS-OFF-01 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 394 955 170  1 625 841
+;;; Accept established/related
+ 3   forward  accept                2 394 955 170  1 625 841
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        5 806         15
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          4 972         87
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 520        144
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       23 598        435
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 714        107
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 812 520     22 736
+;;; VLAN20 -> WAN
+15   forward  accept                      442 037      7 468
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 162         73
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-01 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 405 370 803  1 630 155
+;;; Accept established/related
+ 3   forward  accept                2 405 370 803  1 630 155
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        5 806         15
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          4 972         87
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 520        144
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       23 598        435
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 714        107
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 818 550     22 828
+;;; VLAN20 -> WAN
+15   forward  accept                      452 117      7 653
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 162         73
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-01 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 408 481 439  1 637 027
+;;; Accept established/related
+ 3   forward  accept                2 408 481 439  1 637 027
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        5 806         15
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          4 972         87
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 700        147
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       24 082        444
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 834        109
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 824 371     22 918
+;;; VLAN20 -> WAN
+15   forward  accept                      462 829      7 852
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 162         73
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-01 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 418 656 957  1 640 792
+;;; Accept established/related
+ 3   forward  accept                2 418 656 957  1 640 792
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 352         16
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 392         94
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 700        147
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       24 082        444
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 834        109
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 829 654     22 999
+;;; VLAN20 -> WAN
+15   forward  accept                      469 149      7 966
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 162         73
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-02 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 421 670 410  1 647 804
+;;; Accept established/related
+ 3   forward  accept                2 421 670 410  1 647 804
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 352         16
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 452         95
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 880        150
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       24 566        453
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 954        111
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 835 639     23 092
+;;; VLAN20 -> WAN
+15   forward  accept                      478 981      8 143
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 238         74
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-02 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 432 107 606  1 652 034
+;;; Accept established/related
+ 3   forward  accept                2 432 107 606  1 652 034
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 352         16
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 452         95
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        8 880        150
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       24 566        453
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        6 954        111
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 841 587     23 185
+;;; VLAN20 -> WAN
+15   forward  accept                      489 055      8 325
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 238         74
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-02 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 435 282 195  1 659 435
+;;; Accept established/related
+ 3   forward  accept                2 435 282 195  1 659 435
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 352         16
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 452         95
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 060        153
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       25 050        462
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 074        113
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 848 947     23 296
+;;; VLAN20 -> WAN
+15   forward  accept                      500 809      8 543
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 238         74
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-02 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 445 380 478  1 663 007
+;;; Accept established/related
+ 3   forward  accept                2 445 380 478  1 663 007
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 898         17
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 872        102
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 060        153
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       25 050        462
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 074        113
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 853 930     23 372
+;;; VLAN20 -> WAN
+15   forward  accept                      507 509      8 667
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 238         74
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-03 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 448 444 125  1 669 927
+;;; Accept established/related
+ 3   forward  accept                2 448 444 125  1 669 927
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 898         17
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 932        103
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 240        156
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       25 594        472
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 254        116
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 860 155     23 469
+;;; VLAN20 -> WAN
+15   forward  accept                      518 388      8 863
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 314         75
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-03 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 458 959 520  1 674 415
+;;; Accept established/related
+ 3   forward  accept                2 458 959 520  1 674 415
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 898         17
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 932        103
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 240        156
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       25 594        472
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 254        116
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 866 605     23 568
+;;; VLAN20 -> WAN
+15   forward  accept                      528 344      9 041
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 314         75
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-03 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 462 141 049  1 681 559
+;;; Accept established/related
+ 3   forward  accept                2 462 141 049  1 681 559
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        6 898         17
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          5 932        103
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 420        159
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 078        481
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 374        118
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 873 386     23 674
+;;; VLAN20 -> WAN
+15   forward  accept                      538 516      9 224
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 314         75
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-03 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 472 226 156  1 684 898
+;;; Accept established/related
+ 3   forward  accept                2 472 226 156  1 684 898
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 252         18
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          6 352        110
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 420        159
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 078        481
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 374        118
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 878 290     23 749
+;;; VLAN20 -> WAN
+15   forward  accept                      544 472      9 328
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 314         75
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-04 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 475 206 260  1 691 812
+;;; Accept established/related
+ 3   forward  accept                2 475 206 260  1 691 812
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 252         18
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          6 412        111
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 600        162
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 562        490
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 494        120
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 884 196     23 841
+;;; VLAN20 -> WAN
+15   forward  accept                      555 032      9 522
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-04 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 485 657 959  1 696 193
+;;; Accept established/related
+ 3   forward  accept                2 485 657 959  1 696 193
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 252         18
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          6 412        111
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 600        162
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 562        490
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 494        120
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 890 144     23 934
+;;; VLAN20 -> WAN
+15   forward  accept                      564 392      9 689
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-04 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 488 748 627  1 703 517
+;;; Accept established/related
+ 3   forward  accept                2 488 748 627  1 703 517
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 880        430
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 252         18
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          6 412        111
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 780        165
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 838        495
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 614        122
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 896 767     24 035
+;;; VLAN20 -> WAN
+15   forward  accept                      575 960      9 905
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-04 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 498 902 334  1 707 122
+;;; Accept established/related
+ 3   forward  accept                2 498 902 334  1 707 122
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 956        431
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 798         19
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          6 936        120
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 780        165
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       26 838        495
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 614        122
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 901 911     24 114
+;;; VLAN20 -> WAN
+15   forward  accept                      582 080     10 014
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-05 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 501 918 456  1 714 511
+;;; Accept established/related
+ 3   forward  accept                2 501 918 456  1 714 511
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 956        431
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 798         19
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          7 100        123
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 960        168
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       27 322        504
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 734        124
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 907 896     24 207
+;;; VLAN20 -> WAN
+15   forward  accept                      592 652     10 209
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-OFF-05 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 512 415 413  1 719 028
+;;; Accept established/related
+ 3   forward  accept                2 512 415 413  1 719 028
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 956        431
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 798         19
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          7 100        123
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                        9 960        168
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       27 322        504
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 734        124
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 914 117     24 304
+;;; VLAN20 -> WAN
+15   forward  accept                      603 152     10 402
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-05 before
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 515 392 878  1 726 147
+;;; Accept established/related
+ 3   forward  accept                2 515 392 878  1 726 147
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       25 956        431
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        7 798         19
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          7 100        123
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                       10 140        171
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       27 806        513
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 854        126
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 920 349     24 398
+;;; VLAN20 -> WAN
+15   forward  accept                      613 344     10 589
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+
+
+# RS-ON-05 after
+Flags: D - DYNAMIC
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ #   CHAIN    ACTION                        BYTES    PACKETS
+;;; special dummy rule to show fasttrack counters
+ 0 D forward  passthrough                       0          0
+;;; Allow Wazuh from pfSense
+ 1   forward  accept                            0          0
+;;; FastTrack established/related
+ 2   forward  fasttrack-connection  2 525 505 232  1 729 783
+;;; Accept established/related
+ 3   forward  accept                2 525 505 232  1 729 783
+;;; Quarantena - Wazuh -> Quarantena
+ 4   forward  accept                       26 032        432
+;;; Quarantena - Quarantena -> Wazuh
+ 5   forward  accept                        8 344         20
+;;; Drop verso quarantena
+ 6   forward  drop                              0          0
+;;; Drop da quarantena
+ 7   forward  drop                          7 572        131
+;;; VLAN10 -> VLAN20
+ 8   forward  accept                       10 140        171
+;;; VLAN20 -> VLAN10
+ 9   forward  accept                       27 806        513
+;;; VLAN10 -> VLAN30
+10   forward  accept                       82 140      1 369
+;;; VLAN30 -> VLAN10
+11   forward  accept                        7 854        126
+;;; VLAN20 -> VLAN30
+12   forward  accept                        2 380         40
+;;; VLAN30 -> VLAN20
+13   forward  accept                          788         15
+;;; VLAN10 -> WAN
+14   forward  accept                    1 925 392     24 475
+;;; VLAN20 -> WAN
+15   forward  accept                      619 464     10 698
+;;; VLAN30 -> WAN
+16   forward  accept                       50 886        698
+;;; VPN SSH to VLANS
+17   forward  accept                        5 390         76
+;;; VPN RDP to VLANS
+18   forward  accept                            0          0
+;;; VPN HTTPS to VLANS
+19   forward  accept                        1 716         33
+;;; VPN HTTP to VLANS
+20   forward  accept                            0          0
+;;; Drop everything else
+21   forward  drop                          3 060         59
+

@@ -1,0 +1,250 @@
+<group name="zeek_custom,ssh_bruteforce_correlation,ssh_pair_confirmed,">
+
+    <!-- ============================================================ -->
+    <!-- 120935 - ZEEK + LOCAL SSHD BRUTE FORCE CONFIRMATION         -->
+    <!--                                                            -->
+    <!-- Previous event:                                             -->
+    <!--   100920 = Zeek SSH brute-force detection                   -->
+    <!--                                                            -->
+    <!-- Current event:                                              -->
+    <!--   5712 = brute force against non-existent users             -->
+    <!--   5763 = brute force against existing users/auth failures   -->
+    <!--                                                            -->
+    <!-- Both expose the normalized dynamic field src_ip.            -->
+    <!-- ============================================================ -->
+
+    <rule id="120935"
+          level="12"
+          frequency="2"
+          timeframe="300">
+
+        <if_matched_sid>100920</if_matched_sid>
+        <if_sid>5712,5763</if_sid>
+
+        <!--
+            100920 comes from the Zeek agent.
+            5712/5763 comes from the SSH target agent.
+        -->
+        <global_frequency />
+
+        <!--
+            Zeek.src_ip == sshd.src_ip
+        -->
+        <same_srcip />
+	<same_dstip />
+
+        <description>SSH brute-force activity confirmed by Zeek network telemetry and local SSH authentication logs. Attacker: $(srcip), victim: $(dstip).</description>
+
+        <mitre>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>zeek_custom,ssh,ssh_bruteforce,confirmed_ssh_bruteforce,cross_source_detection,authentication_attack,</group>
+
+    </rule>
+
+    <!-- ============================================================ -->
+    <!-- 120938 - LOCAL 5763 -> ZEEK 100920                          -->
+    <!--                                                            -->
+    <!-- Same correlation as 120935, but handles the opposite       -->
+    <!-- event arrival order.                                       -->
+    <!-- ============================================================ -->
+
+    <rule id="120938" level="12" frequency="2" timeframe="300">
+
+        <if_matched_sid>5763</if_matched_sid>
+        <if_sid>100920</if_sid>
+
+        <global_frequency />
+
+        <same_srcip />
+	<same_dstip />
+
+        <description>SSH brute-force activity confirmed by local SSH authentication logs and Zeek network telemetry. Attacker: $(srcip), victim: $(dstip).</description>
+
+        <mitre>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>zeek_custom,ssh,ssh_bruteforce,confirmed_ssh_bruteforce,cross_source_detection,authentication_attack,</group>
+
+    </rule>
+
+    <!-- ============================================================ -->
+    <!-- 120939 - LOCAL 5712 -> ZEEK 100920                          -->
+    <!-- ============================================================ -->
+
+    <rule id="120939" level="12" frequency="2" timeframe="300">
+
+        <if_matched_sid>5712</if_matched_sid>
+        <if_sid>100920</if_sid>
+
+        <global_frequency />
+
+        <same_srcip />
+	<same_dstip />
+
+        <description>SSH brute-force activity against non-existent users confirmed by local SSH authentication logs and Zeek network telemetry. Attacker: $(srcip), victim: $(dstip).</description>
+
+        <mitre>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>zeek_custom,ssh,ssh_bruteforce,confirmed_ssh_bruteforce,cross_source_detection,authentication_attack,</group>
+
+    </rule>
+
+        <!-- ============================================================ -->
+    <!-- 120940 - SSH BRUTE FORCE FAN-OUT                            -->
+    <!--                                                            -->
+    <!-- Same attacker -> different confirmed victims.              -->
+    <!-- Input: 120935 / 120938 / 120939 through ssh_pair_confirmed -->
+    <!-- ============================================================ -->
+
+    <rule id="120940"
+          level="13"
+          frequency="2"
+          timeframe="900">
+
+        <if_group>ssh_pair_confirmed</if_group>
+        <if_matched_group>ssh_pair_confirmed</if_matched_group>
+
+        <global_frequency />
+
+        <same_srcip />
+        <different_dstip />
+
+        <description>SSH brute-force fan-out detected. Attacker $(srcip) has targeted multiple distinct victims; latest victim: $(dstip).</description>
+
+        <mitre>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>ssh,ssh_bruteforce,ssh_bruteforce_fanout,cross_source_detection,authentication_attack,</group>
+
+    </rule>
+
+    <!-- ============================================================ -->
+    <!-- 120941 - SSH BRUTE FORCE FAN-IN                             -->
+    <!--                                                            -->
+    <!-- Different attackers -> same confirmed victim.              -->
+    <!-- Input: 120935 / 120938 / 120939 through ssh_pair_confirmed -->
+    <!-- ============================================================ -->
+
+    <rule id="120941"
+          level="13"
+          frequency="2"
+          timeframe="900">
+
+        <if_group>ssh_pair_confirmed</if_group>
+        <if_matched_group>ssh_pair_confirmed</if_matched_group>
+
+        <global_frequency />
+
+        <different_srcip />
+        <same_dstip />
+
+        <description>SSH brute-force fan-in detected. Multiple distinct attackers have targeted victim $(dstip); latest attacker: $(srcip).</description>
+
+        <mitre>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>ssh,ssh_bruteforce,ssh_bruteforce_fanin,cross_source_detection,authentication_attack,</group>
+
+    </rule>
+
+    <!-- ============================================================ -->
+    <!-- 120936 - SCANNING -> CONFIRMED SSH BRUTE FORCE             -->
+    <!--                                                            -->
+    <!-- A Zeek scanning event was previously observed.              -->
+    <!-- The same source host subsequently performed an SSH          -->
+    <!-- brute-force attack confirmed by Zeek + local sshd.          -->
+    <!--                                                            -->
+    <!-- scan.src_ip == brute_force.src_ip                           -->
+    <!-- ============================================================ -->
+
+    <rule id="120936"
+          level="14"
+          frequency="2"
+          timeframe="900">
+
+        <if_matched_group>zeek_scanning</if_matched_group>
+        <if_sid>120935,120938,120939</if_sid>
+
+        <!--
+            Previous scanning event: Zeek agent.
+            Current 120935 event: SSH target agent.
+        -->
+        <global_frequency />
+
+        <same_field>src_ip</same_field>
+
+        <description>Confirmed SSH brute-force activity detected after network scanning from the same source host. Source IP: $(src_ip).
+        </description>
+
+        <mitre>
+            <id>T1046</id>
+            <id>T1110</id>
+            <id>T1021.004</id>
+        </mitre>
+
+        <group>zeek_custom,scanning_to_ssh_bruteforce,confirmed_ssh_bruteforce,reconnaissance,lateral_movement,cross_source_detection,attack_chain,</group>
+
+    </rule>
+
+
+    <!--
+     Successful SSH authentication after the complete chain:
+
+     network scanning
+          ->
+     confirmed SSH brute force
+          ->
+     successful SSH authentication
+
+     The successful authentication must belong to the exact same
+     attacker -> victim pair previously confirmed by rule 120936.
+     -->
+   <rule id="120937" level="15" frequency="2" timeframe="900">
+
+      <if_matched_sid>120936</if_matched_sid>
+
+       <!--
+         5715  = normal successful SSH authentication
+         40112 = multiple authentication failures followed by success
+       -->
+       <if_sid>5715,40112</if_sid>
+
+       <!--
+         120936 is generated by Zeek while the successful SSH
+         authentication is generated by the endpoint agent.
+       -->
+       <global_frequency />
+
+       <!--
+         Exact ordered pair correlation:
+
+         attacker -> victim
+       -->
+       <same_srcip />
+       <same_dstip />
+
+       <description>Successful SSH authentication detected after a confirmed SSH brute-force attack preceded by network scanning. Attacker: $(srcip), victim: $(dstip), user: $(dstuser). Possible successful lateral movement.</description>
+
+       <mitre>
+          <id>T1046</id>
+          <id>T1110</id>
+          <id>T1021.004</id>
+       </mitre>
+
+       <group>zeek_custom,ssh_bruteforce_correlation,ssh_pair_confirmed,scanning_to_ssh_bruteforce,successful_ssh_after_bruteforce,confirmed_ssh_bruteforce,reconnaissance,lateral_movement,cross_source_detection,attack_chain,</group>
+
+   </rule>
+
+</group>

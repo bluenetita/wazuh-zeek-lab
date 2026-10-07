@@ -1,0 +1,41 @@
+{
+  "source": "Calculated from routeros_ar_runs.original.tsv timestamps; consistent with supplied metrics_summary.original.txt",
+  "T_D_all": {
+    "n": 10,
+    "mean_ms": 33214.1,
+    "median_ms": 32922.5,
+    "min_ms": 31938.0,
+    "max_ms": 35925.0
+  },
+  "T_AR_ON": {
+    "n": 5,
+    "mean_ms": 357.8,
+    "median_ms": 359.0,
+    "min_ms": 341.0,
+    "max_ms": 372.0
+  },
+  "T_C_ON": {
+    "n": 5,
+    "mean_ms": 36744.0,
+    "median_ms": 36868.0,
+    "min_ms": 36269.0,
+    "max_ms": 37017.0
+  },
+  "OFF": {
+    "runs": 5,
+    "quarantine": 0,
+    "probe_containment": 0
+  },
+  "ON": {
+    "runs": 5,
+    "quarantine": 5,
+    "probe_containment": 5
+  },
+  "limitations": [
+    "T_D includes human trigger time after coordinator GO.",
+    "T_AR uses two Wazuh-host timestamps and denotes the logged response completion, not first packet blocked.",
+    "T_C mixes coordinator and client probe clocks, includes probe timeout/sampling; no precision clock-offset calibration in archive.",
+    "Containment measured on client 10.3.20.2 -> 10.2.0.2 TCP/22; not a proof that all traffic or the exact reverse-shell connection was blocked.",
+    "Recovery follows explicit coordinator cleanup; script rollback not demonstrated."
+  ]
+}

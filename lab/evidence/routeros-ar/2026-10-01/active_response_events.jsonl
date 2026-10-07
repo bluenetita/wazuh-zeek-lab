@@ -1,0 +1,5 @@
+{"run_id":"RS-ON-01","line":"2026-10-01T16:19:17.408770Z routeros_quarantine: Quarantined ip=10.3.20.2 rule_id=120911 agent=Zeek and removed active connections"}
+{"run_id":"RS-ON-02","line":"2026-10-01T16:24:16.184947Z routeros_quarantine: Quarantined ip=10.3.20.2 rule_id=120911 agent=Zeek and removed active connections"}
+{"run_id":"RS-ON-03","line":"2026-10-01T16:29:21.036857Z routeros_quarantine: Quarantined ip=10.3.20.2 rule_id=120911 agent=Zeek and removed active connections"}
+{"run_id":"RS-ON-04","line":"2026-10-01T16:34:21.770787Z routeros_quarantine: Quarantined ip=10.3.20.2 rule_id=120908 agent=Zeek and removed active connections"}
+{"run_id":"RS-ON-05","line":"2026-10-01T16:39:20.560282Z routeros_quarantine: Quarantined ip=10.3.20.2 rule_id=120908 agent=Zeek and removed active connections"}

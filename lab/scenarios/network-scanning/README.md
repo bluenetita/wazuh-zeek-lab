@@ -1,33 +1,37 @@
-# Network Scanning Scenario
+# Network Scanning
 
-## Objective
+Scenario di rilevamento di attività di scanning mediante script Zeek custom e regole Wazuh.
 
-Validate that mirrored reconnaissance traffic produces the expected Zeek scanning event and Wazuh base rule, and that scanning occurring after an earlier reverse-shell correlation can trigger a higher-confidence post-compromise rule.
+## Detector e soglie nello snapshot finale
 
-## Detection coverage
+| Detector | Soglia | Finestra |
+|---|---:|---:|
+| TCP address scan | 20 destinazioni per sorgente/porta | 60 s |
+| TCP port scan | 100 porte | 60 s |
+| UDP port scan | 50 porte | 60 s |
+| ARP host scan | 20 target | 60 s |
+| ICMP host scan | 2 target | 60 s |
 
-| Activity pattern | Zeek event | Wazuh rule |
-|---|---|---:|
-| ARP host discovery | `host_scan` | `100915` |
-| TCP port scan | `port_scan` | `100916` |
-| UDP port scan | `udp_port_scan` | `100917` |
-| Same TCP port across multiple hosts | `address_scan` | `100918` |
-| ICMP host discovery | `icmp_host_scan` | `100919` |
+Le soglie sono valori del laboratorio e non una baseline universale.
 
-Post-compromise correlation rules are `120927-120934` and require the scanner `src_ip` to match an earlier reverse-shell correlation within 900 seconds.
+## Address scan
 
-## Expected evidence
+File aggiornato:
 
-- one JSON event in `/var/log/zeek-custom/scanning.log`;
-- the matching Wazuh base rule;
-- for the correlated test, an earlier reverse-shell correlation rule followed by a scanning event from the same source address.
+```text
+blue-team/zeek/site/custom_scripts/scanning/address_scan.zeek
+```
 
-See `evidence/scanning/`.
+Lo script traccia, per TCP, le destinazioni contattate da una sorgente su una stessa porta e genera `address_scan` quando il numero di target raggiunge la soglia.
 
-## Tuning
+Durante le prove SSH il valore sperimentale `threshold=2` causava un falso positivo: A1 che contattava V1 e V2 sulla porta 22 veniva classificato anche come address scan. Lo snapshot finale mantiene `threshold=20`; dopo il cambiamento il test su due vittime non ha più prodotto `100918`.
 
-The address-scan and ICMP thresholds are intentionally low in the current lab configuration. Treat them as validation thresholds and tune them before longer-running monitoring.
+## Correlazione con SSH
 
-## Test-command note
+La regola `120936` collega scanning precedente e brute force SSH confermato dalla stessa sorgente. È intenzionalmente source-oriented: uno scan può coinvolgere più destinazioni e non sempre fornisce una singola vittima da confrontare.
 
-Exact reconnaissance command lines are intentionally not included in the public update package. Keep authorized test commands in private lab notes.
+Il tuning a 20 isola correttamente il test fan-out a due server, ma non costituisce una validazione completa dell'interazione simultanea tra uno scan reale e il fan-out SSH.
+
+## Riproducibilità
+
+Con soglia 20, contattare soltanto due host non è più sufficiente per riprodurre `100918`. Le prove di scanning devono essere coerenti con la soglia configurata e svolte esclusivamente nel cyber range autorizzato.
