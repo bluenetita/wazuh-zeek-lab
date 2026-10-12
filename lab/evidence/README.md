@@ -1,7 +1,6 @@
 # Evidence
 
 This directory contains **reduced and sanitized** evidence from results observed in the cyber range. Scenario documentation explains each test; `evidence/` retains the data required to support the result without publishing complete raw archives.
-
 ## Available evidence
 
 | Directory | Contents |
@@ -12,7 +11,7 @@ This directory contains **reduced and sanitized** evidence from results observed
 | `apparmor/2026-10-servicefix/` | final AppArmor series: 5 complain + 5 enforce |
 | `routeros-ar/2026-10-01/` | 5 OFF + 5 ON runs, probes, selected alerts, and metrics |
 | `ssh-bruteforce/` | Zeek/Wazuh samples and multi-host test matrix |
-
+| `mitm/` | reduced ARP/DHCP/DNS positive-path Zeek samples and a compact result index |
 ## Publication criteria
 
 The repository may include:
@@ -32,7 +31,6 @@ The repository does not include:
 - complete process dumps or journal exports;
 - private router configurations;
 - personal data or unnecessary runtime files.
-
 ## Relationship with `scenarios/`
 
 ```text

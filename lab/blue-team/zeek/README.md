@@ -17,7 +17,6 @@ VLAN 10 / 20 / 30
 ```
 
 The mirror interface used in the lab is `ens19.999`.
-
 ## Main files
 
 | File | Function |
@@ -26,9 +25,8 @@ The mirror interface used in the lab is `ens19.999`.
 | `site/custom_scripts/reverse_shell/reverse_shell_movement.zeek` | movement detector v2 |
 | `site/custom_scripts/scanning/address_scan.zeek` | TCP address-scan detector |
 | `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | SSH detection keyed by source/destination pair |
-
+| `site/custom_scripts/mitm/` | ARP binding, rogue DHCP, and protected-DNS MITM indicators |
 Other scripts already present in the repository (`reverse_shell.zeek`, malware/download detection, scanning loader, logging, exfiltration, and other detectors) should be preserved.
-
 ## Custom logs
 
 Custom logs are written under `/var/log/zeek-custom/`. The most relevant are:
@@ -40,10 +38,12 @@ reverse_shell_movement.log
 reverse_shell_final.log
 scanning.log
 ssh_bruteforce.log
+mitm_arp.log
+mitm_dhcp.log
+mitm_dns.log
 ```
 
 The movement detector v2 also maintains a dedicated diagnostic log for experimental verification.
-
 ## Reverse-shell movement v2
 
 The detector considers TCP connections toward destinations outside the excluded internal subnets and applies the main condition:
@@ -55,9 +55,7 @@ resp_pkts > 10
 ```
 
 The older average-packet-size values are retained only for diagnostics. The connection is reevaluated periodically and when packets are observed; each connection emits at most one movement event.
-
 Packet-based counters can be affected by mirror duplicates or retransmissions, so the heuristic is not equivalent to definitive reverse-shell identification.
-
 ## SSH brute force
 
 The SSH script maintains state for:
@@ -74,8 +72,11 @@ unknown_connections = 5
 auth_attempts = 0
 detection_reason = repeated_ssh_connections_unknown_auth
 ```
-
 This **does not** mean that Zeek observed five incorrect passwords. Authentication-failure confirmation comes from `sshd` logs collected by Wazuh.
+
+## MITM package
+
+`site/custom_scripts/mitm/` contains three lab-specific detectors. ARP detection checks trusted IP-to-MAC bindings, DHCP detection flags server responses on VLAN 20 where no legitimate DHCP server is expected, and DNS detection flags protected public names returning private IPv4 addresses to the protected client. See the package README for baseline values, limitations, ATT&CK mapping, and visibility requirements.
 
 ## Scanning
 
@@ -90,13 +91,11 @@ Values in the final snapshot:
 | ICMP host scan | 2 targets | 60 s |
 
 The `address_scan` threshold was restored from 2 to 20 because the test value also classified simple SSH contact with two servers as a scan. This is lab tuning, not a universal baseline.
-
 ## Capture quality
 
 During checks on `ens19.999`, GRO was observed as `off`, GSO as `on`, and LRO as `off [fixed]`. The repository does not include an unverified persistent unit that forces these values after reboot.
 
 `ignore_checksums=T` is present in the laboratory configuration and should be reassessed in a different deployment.
-
 ## Operational checks
 
 ```bash

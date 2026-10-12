@@ -1,0 +1,4 @@
+test_id	vector	zeek_event	reason	zeek_evidence	wazuh_rule	wazuh_alert_evidence
+MITM-ARP-P01	ARP	arp_spoof	protected_ip_mac_mismatch	zeek-arp-sample.jsonl	100930	not_in_supplied_archive
+MITM-DHCP-P01	DHCP	dhcp_spoof	unexpected_dhcp_server_on_static_segment	zeek-dhcp-sample.jsonl	100931	not_in_supplied_archive
+MITM-DNS-P01	DNS	dns_spoof	protected_public_domain_resolved_to_private_address	zeek-dns-sample.jsonl	100932	not_in_supplied_archive

@@ -1,0 +1,72 @@
+<group name="zeek_custom,mitm,">
+
+  <!--
+    ARP spoofing / ARP cache poisoning.
+
+    Zeek has observed a protected IP address being advertised
+    by a MAC address different from its trusted baseline.
+  -->
+  <rule id="100930" level="12">
+    <if_sid>100900</if_sid>
+
+    <location>/var/log/zeek-custom/mitm_arp.log</location>
+
+    <field name="event_type">^arp_spoof$</field>
+    <field name="reason">^protected_ip_mac_mismatch$</field>
+
+    <description>Zeek: ARP spoofing suspected. Protected IP $(claimed_ip) was advertised by unexpected MAC $(observed_mac); expected MAC $(expected_mac). Target IP: $(target_ip). MAC ownership is an unverified attribution hint.</description>
+
+    <mitre>
+      <id>T1557.002</id>
+    </mitre>
+
+    <group>arp_spoofing,network_attack,mitm_detection,</group>
+  </rule>
+
+    <!--
+    DHCP spoofing / rogue DHCP server.
+
+    The monitored VLAN 20 is statically addressed and no
+    legitimate DHCP server is expected on this segment.
+  -->
+  <rule id="100931" level="12">
+    <if_sid>100900</if_sid>
+
+    <location>/var/log/zeek-custom/mitm_dhcp.log</location>
+
+    <field name="event_type">^dhcp_spoof$</field>
+    <field name="reason">^unexpected_dhcp_server_on_static_segment$</field>
+
+    <description>Zeek: Rogue DHCP activity suspected. Apparent DHCP server $(server_ip) offered IP $(offered_ip) to client MAC $(client_mac), advertising router $(router_ip) and DNS $(dns_server_1).</description>
+
+    <mitre>
+      <id>T1557.003</id>
+    </mitre>
+
+    <group>dhcp_spoofing,rogue_dhcp,network_attack,mitm_detection,</group>
+  </rule>
+
+    <!--
+    DNS spoofing / manipulated DNS response.
+
+    A protected public domain was resolved to a private
+    address during the monitored MITM scenario.
+  -->
+  <rule id="100932" level="12">
+    <if_sid>100900</if_sid>
+
+    <location>/var/log/zeek-custom/mitm_dns.log</location>
+
+    <field name="event_type">^dns_spoof$</field>
+    <field name="reason">^protected_public_domain_resolved_to_private_address$</field>
+
+    <description>Zeek: DNS spoofing suspected. Client $(client_ip) received suspicious address $(answer_ip) for protected domain $(query) through apparent resolver $(resolver_ip).</description>
+
+    <mitre>
+      <id>T1557</id>
+    </mitre>
+
+    <group>dns_spoofing,dns_poisoning,network_attack,mitm_detection,</group>
+  </rule>
+
+</group>

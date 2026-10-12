@@ -138,3 +138,6 @@ redef ignore_checksums=T;
 
 # SSH_Bruteforce
 @load custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek
+
+# MITM detection: ARP / DHCP / DNS spoofing
+@load custom_scripts/mitm
