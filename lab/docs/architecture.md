@@ -29,7 +29,10 @@ ZeekVM
         +--> Standard Zeek JSON logs
         +--> Reverse-shell custom logs
         +--> Data-exfiltration custom log
-        +--> scanning.log
+        +--> scanning.log (reconnaissance)
+        +--> ssh_bruteforce.log (network SSH candidates)
+        +--> mitm_arp.log / mitm_dhcp.log / mitm_dns.log
+        +--> icmp_flood.log (Echo Request observation anomaly)
         |
         v
 Wazuh Agent on ZeekVM
@@ -37,6 +40,12 @@ Wazuh Agent on ZeekVM
         v
 Wazuh Manager
 ```
+
+## ICMP Echo Flood observation and classification
+
+Zeek's ICMP Flood detector groups mirrored IPv4 Echo Request observations by the explicitly configured **destination**. It stores a bounded history of observation timestamps for an exact sliding window; on a threshold crossing it writes a structured `icmp_flood_suspected` event to `icmp_flood.log`. The ZeekVM Wazuh Agent forwards this JSON record, and Wazuh rule `100940` classifies it. Detection does not demonstrate a service outage or a verified attacker identity; mirrored ingress/egress can cause more than one observation of a single request. No source-based RouterOS quarantine is attached to this signal.
+
+See [the scenario](../scenarios/icmp-flood/README.md) and [Wazuh ruleset index](../blue-team/wazuh/rules/README.md).
 
 ## Endpoint telemetry flow
 

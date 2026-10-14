@@ -26,6 +26,7 @@ The mirror interface used in the lab is `ens19.999`.
 | `site/custom_scripts/scanning/address_scan.zeek` | TCP address-scan detector |
 | `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | SSH detection keyed by source/destination pair |
 | `site/custom_scripts/mitm/` | ARP binding, rogue DHCP, and protected-DNS MITM indicators |
+| `site/custom_scripts/icmp_flood/icmp_flood.zeek` | IPv4 ICMP Echo Request anomaly detector, exact per-destination sliding window |
 Other scripts already present in the repository (`reverse_shell.zeek`, malware/download detection, scanning loader, logging, exfiltration, and other detectors) should be preserved.
 ## Custom logs
 
@@ -41,6 +42,7 @@ ssh_bruteforce.log
 mitm_arp.log
 mitm_dhcp.log
 mitm_dns.log
+icmp_flood.log
 ```
 
 The movement detector v2 also maintains a dedicated diagnostic log for experimental verification.
@@ -108,3 +110,9 @@ Run `zeekctl deploy` only when the sensor should actually be reloaded; a deploy 
 ## Limitations
 
 Zeek does not directly observe local processes, local commands, filesystem changes, or encrypted application payloads. For those aspects, the project combines Zeek with Wazuh, Auditd, and, in mitigation scenarios, AppArmor.
+
+## ICMP Echo Flood (v1.5)
+
+The `icmp_flood` custom policy monitors the explicitly configured destination set using a sliding window of five seconds and a threshold of 500 **mirror observations**; it does not attempt sender attribution. The detector emits JSON to `/var/log/zeek-custom/icmp_flood.log`, consumed by Wazuh rule `100940`. Detailed metrics are disabled by default. A bounded timestamp ring avoids keeping an unlimited history of packets. The OVS mirror may duplicate routed Echo Requests, so the threshold is lab-specific.
+
+The detector was regression tested against a v1.4 boundary false negative, including a PCAP where two adjacent fixed windows had 366 and 436 observations but a rolling five-second window had 800. See [the detector README](site/custom_scripts/icmp_flood/README.md) and [the experiment](../../scenarios/icmp-flood/README.md).

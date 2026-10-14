@@ -1,0 +1,12 @@
+test_id	version	mode	observed_events	alerts	outcome	limitations
+low_offline	v1.5	pcap_replay	320	0	negative_control_pass	single benign capture; not a population false-positive rate
+high_offline	v1.5	pcap_replay	596	1	positive_control_pass	short capture; offline timers may flush when replay ends
+multiwindow_offline	v1.5	pcap_replay	1600	1	cooldown_pass	capture contained two windows
+boundary_fixed	v1.4	pcap_replay	802	0	missed_threshold_in_fixed_windows	fixed window counts 366 and 436
+boundary_sliding	v1.5	pcap_replay	802	1	corrected_boundary_case	rolling maximum 800 in 5s; alert ts 1791974668.501825
+live_one_of_two	v1.4	live	1120	1	target_independence_negative_control	800 to ServerDB; 320 to Client-Linux
+live_both_targets	v1.5	live	1600	2	concurrent_targets_pass	800 each; independent alerts
+live_sustained	v1.5	live	5600	2	cooldown_rearm_pass	30 second gap between alerts
+live_spoof	v1.5	live	800	1	spoofed_source_detection_pass	separate second PCAP confirms source 10.3.20.250; no verified attacker identity
+live_performance	v1.5	live	4800	1	preliminary_resource_check_pass	12145 total captured packets 0 dropped; pidstat 20s avg CPU 0.70pct RSS 248809KiB
+end_to_end_wazuh	v1.5	live	500	1	rule_100940_pass	verified manager alert; unsynchronized clocks prevent E2E latency measurement

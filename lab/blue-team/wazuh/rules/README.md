@@ -1,6 +1,6 @@
 # Wazuh Custom Rules
 
-This directory contains the active laboratory ruleset and the new scanning/AppArmor additions.
+This directory contains the custom laboratory ruleset for network telemetry, endpoint telemetry, correlation, and scenario-specific detections. Rule IDs below describe the checked-in files; they do not enable any Active Response by themselves.
 
 ## Files and rule ranges
 
@@ -13,6 +13,9 @@ This directory contains the active laboratory ruleset and the new scanning/AppAr
 | `005_zeek_scanning_correlation.xml` | `120927-120934` | Scanning after an earlier reverse-shell correlation |
 | `006_app_armor.xml` | `130900-130983` | AppArmor denial classification and repeated-activity correlation |
 | `1004_auditd_rules.xml` | `100700-100704` | SUID, root, `sudo`, `su`, and downloads-directory execution |
+| `007_mitm_rules.xml` | `100930-100932` | ARP mismatch, unexpected DHCP responder, protected DNS answers |
+| `008_zeek_icmp_flood_rules.xml` | `100940` | Destination-focused ICMP Echo Flood anomaly |
+| `9999_ssh_bruteforce_correlation.xml` | `100920-100921`, `120935-120941` and other SSH rules | SSH candidate confirmation, pair-based correlations and fan-in/fan-out |
 
 ## Scanning base rules
 
@@ -25,6 +28,22 @@ This directory contains the active laboratory ruleset and the new scanning/AppAr
 | `100919` | 6 | `icmp_host_scan` |
 
 All scanning rules add group `zeek_scanning`, which is consumed by the correlation rules.
+
+## ICMP Echo Flood vs ICMP reconnaissance
+
+Rule `100919` is `icmp_host_scan`: a host probing multiple destinations. It is **not** the ICMP Echo Flood detector. Rule `100940` belongs to `008_zeek_icmp_flood_rules.xml` and triggers on a Zeek JSON event with `event_type=icmp_flood_suspected` and a log location matching `icmp_flood.log`. It is level 8 and mapped to ATT&CK `T1498.001`. The event counts mirrored **observations**, not de-duplicated requests; `dest_ip` identifies the monitored victim and `source_attribution=unverified` expressly avoids claiming attacker identity.
+
+`100940` uses the existing JSON parent `100900`; do not duplicate the parent or add an unnecessary decoder. Test location-dependent classification with:
+
+```bash
+sudo /var/ossec/bin/wazuh-logtest -l /var/log/zeek-custom/icmp_flood.log
+```
+
+Paste a reduced JSON Zeek sample, not an `alerts.json` wrapper. See [`../../../scenarios/icmp-flood/README.md`](../../../scenarios/icmp-flood/README.md) and [`../../../evidence/icmp-flood/README.md`](../../../evidence/icmp-flood/README.md).
+
+## MITM and SSH coverage
+
+The MITM rules `100930-100932` classify suspected ARP binding mismatch, rogue DHCP server, and protected-DNS anomaly respectively. SSH rules distinguish ordered `(source, destination)` pairs; `120940` represents fan-out and `120941` fan-in. These IDs and their validation data are unrelated to `100940` despite overlapping numeric prefixes.
 
 ## Reverse-shell to scanning correlation
 

@@ -26,7 +26,7 @@ Reverse-shell confidence increases when Zeek network behavior agrees with Auditd
 
 ### Treat thresholds as environment-specific
 
-The scanning package deliberately uses low thresholds for `address_scan` and `icmp_host_scan` in the current laboratory validation configuration. These values are useful for tests but can be noisy in a continuously monitored network.
+In the checked-in Zeek scanning scripts, `address_scan` uses 20 unique targets / 60 s and `icmp_host_scan` uses 2 unique targets / 60 s. The latter is intentionally aggressive for laboratory validation. The separate ICMP **Flood** detector uses 500 mirrored Echo Request observations / 5 s to a monitored destination, and is **not** a host-scanning classifier. These threshold settings are laboratory-specific, not production baselines.
 
 ### Preserve schema consistency
 
@@ -35,6 +35,12 @@ The current scanning schema uses `src_ip` as the scanner-source field. Older tes
 ### Distinguish prevention from detection
 
 AppArmor complain mode provides visibility without enforcing the policy. Enforce mode blocks operations not granted by the loaded profile. Wazuh reports the AppArmor decision; it does not itself enforce the application policy.
+
+### Compare fixed vs sliding windows fairly
+
+For ICMP Flood v1.5, the boundary regression used the **same** PCAP for the old fixed-window and new sliding-window detectors, with threshold 500 / five seconds. The old detector produced no alert when its adjacent windows contained 366 + 436 observations; the new detector produced one alert when its rolling window contained at least 500. This is a confirmed *scenario-specific* false negative of v1.4, **not** an empirical false-negative rate across attacks.
+
+Report Zeek **mirror observations**, not unique wire requests, because routed traffic may be mirrored in both directions. Treat source IP as unverified if spoofing is possible. Do not compute cross-VM delivery latency from unsynchronized Wazuh and Zeek clocks; report intradetector timings separately.
 
 ## Scenario validation record
 

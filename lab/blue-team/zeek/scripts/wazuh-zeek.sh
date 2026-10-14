@@ -11,6 +11,7 @@ ssh_bruteforce
 mitm_arp
 mitm_dhcp
 mitm_dns
+icmp_flood
 "
 for f in $CUSTOM_LOGS; do
     if [ ! -f "/var/log/zeek-custom/${f}.log" ]; then

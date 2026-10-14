@@ -141,3 +141,6 @@ redef ignore_checksums=T;
 
 # MITM detection: ARP / DHCP / DNS spoofing
 @load custom_scripts/mitm
+
+# ICMP Flood detection
+@load custom_scripts/icmp_flood/icmp_flood.zeek

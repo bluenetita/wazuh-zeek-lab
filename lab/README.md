@@ -56,7 +56,8 @@ The two additional clones are used mainly to validate correlation behavior and d
 | [RouterOS Active Response](scenarios/active-response/README.md) | Validated | 5 OFF + 5 ON runs with quarantine and connectivity probe |
 | [SSH brute force / Endpoint Normalizer](scenarios/ssh-bruteforce/README.md) | Validated | Pair correlation, mismatch tests, fan-out `120940`, fan-in `120941` |
 | [MITM / Adversary-in-the-Middle](scenarios/mitm/README.md) | Validated (positive Zeek path) | ARP, rogue DHCP, and DNS-spoofing indicators; Wazuh rules `100930-100932` |
-The repository does not mark scenarios as completed when this snapshot does not contain enough supporting evidence.
+| [ICMP Echo Flood](scenarios/icmp-flood/README.md) | Functionally validated; threshold tuning pending | Zeek v1.5 sliding window, boundary regression, independent destinations, Wazuh `100940` |
+The repository does not mark scenarios as completed when this snapshot does not contain enough supporting evidence. The ICMP Flood scenario is functionally validated but the lab threshold and NTP-dependent latency remain open.
 ## Recent results
 ### SSH Endpoint Normalizer
 
@@ -79,6 +80,12 @@ The campaign contains 5 runs with Active Response disabled and 5 with it enabled
 ### MITM / Adversary-in-the-Middle
 
 The VLAN 20 campaign adds separate Zeek detections for protected IP/MAC mismatches, unexpected DHCP server responses on the static segment, and protected public DNS names returning private IPv4 answers. Reduced positive-path Zeek evidence is published under `evidence/mitm/`; reusable operational attack commands and full raw logs remain outside the public repository.
+
+### ICMP Echo Flood v1.5
+
+The latest campaign detects excessive mirrored ICMP Echo Request observations directed to selected hosts. An exact per-destination sliding window fixes a v1.4 fixed-window false negative: one 802-observation capture produced **0 alerts in v1.4** (366 + 436 in adjacent windows) and **1 alert in v1.5** (maximum 800 observations in any rolling 5 s interval). Multi-destination controls, sustained cooldown (30 s), spoofed apparent source traffic, and a Wazuh level-8 alert (`100940`, `T1498.001`) were verified. The lab threshold of **500 observations in five seconds** is not calibrated for production; mirrored packets may be seen twice. Inter-VM alert-ingestion latency is **not measured** because NTP synchronization was pending.
+
+See the [scenario](scenarios/icmp-flood/README.md), [Zeek detector](blue-team/zeek/site/custom_scripts/icmp_flood/README.md), [validation note](docs/icmp-flood-validation-2026-10.md), and [reduced evidence](evidence/icmp-flood/README.md).
 
 ## Repository structure
 
@@ -119,6 +126,7 @@ blue-team/zeek/site/custom_scripts/reverse_shell/reverse_shell_movement.zeek
 blue-team/zeek/site/custom_scripts/scanning/address_scan.zeek
 blue-team/zeek/site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek
 blue-team/zeek/site/custom_scripts/mitm/
+blue-team/zeek/site/custom_scripts/icmp_flood/icmp_flood.zeek
 ```
 ### Wazuh
 
@@ -133,6 +141,7 @@ blue-team/wazuh/rules/004_zeek_auditd_correlation.xml
 blue-team/wazuh/rules/005_zeek_scanning_correlation.xml
 blue-team/wazuh/rules/9999_ssh_bruteforce_correlation.xml
 blue-team/wazuh/rules/007_mitm_rules.xml
+blue-team/wazuh/rules/008_zeek_icmp_flood_rules.xml
 ```
 ### Active Response and AppArmor
 

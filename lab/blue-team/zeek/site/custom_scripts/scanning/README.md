@@ -7,7 +7,7 @@ This package generates `/var/log/zeek-custom/scanning.log` and records several r
 | `host_scan.zeek` | `host_scan` | 20 unique ARP targets / 60 s |
 | `port_scan.zeek` | `port_scan` | 100 unique TCP ports to one target / 60 s |
 | `udp_scan.zeek` | `udp_port_scan` | 50 unique UDP ports to one target / 60 s |
-| `address_scan.zeek` | `address_scan` | 2 unique hosts on one TCP port / 60 s |
+| `address_scan.zeek` | `address_scan` | 20 unique hosts on one TCP port / 60 s |
 | `icmp_scan.zeek` | `icmp_host_scan` | 2 unique ICMP targets / 60 s |
 
 `logging.zeek` defines the shared log record and `__load__.zeek` loads all detector modules.
@@ -42,7 +42,9 @@ The canonical source field is `src_ip`. Older rotated logs from earlier developm
 
 ## Tuning
 
-The `address_scan` and `icmp_host_scan` thresholds are intentionally low for validation. They can alert on legitimate multi-host traffic. Raise them and/or add justified allowlists before treating the configuration as production-like.
+The checked-in `address_scan` threshold was restored to **20** from an earlier temporary value of 2 because the test setting classified ordinary contact with two SSH servers as scanning. The `icmp_host_scan` threshold remains **2**, intentionally low for laboratory validation. Re-evaluate both thresholds on realistic benign traffic and add justified allowlists before production use.
+
+`icmp_host_scan` detects reconnaissance across destinations; it is not the destination-volume detector `icmp_flood.zeek`, documented in [the ICMP Flood package](../icmp_flood/README.md). That separate detector tracks a sliding five-second window of mirrored ICMP Echo Request observations for selected victims.
 
 The TCP/UDP port-scan detectors operate on a short window and can miss slow scans spread over longer periods.
 

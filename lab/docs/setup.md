@@ -141,3 +141,9 @@ Before committing:
 - do not add signed webhook URLs, credentials, keys, `client.keys`, or `authd.pass`;
 - keep only reduced/sanitized evidence samples;
 - review `git diff` for accidental secrets.
+
+## ICMP Echo Flood detector (October 2026)
+
+The lab's ICMP anomaly policy is stored at `blue-team/zeek/site/custom_scripts/icmp_flood/icmp_flood.zeek`, loaded from `site/local.zeek` with `@load custom_scripts/icmp_flood/icmp_flood.zeek`. It monitors the configured destination `10.3.30.3` and emits `/var/log/zeek-custom/icmp_flood.log`; Wazuh Agent reads this JSON file and Wazuh Manager applies rule `100940`. The site uses an OVS mirrored VLAN 999 observation point (`ens19.999`) and counts **observations, not necessarily distinct packets**.
+
+See [`../scenarios/icmp-flood/README.md`](../scenarios/icmp-flood/README.md) for functional validation and [`../blue-team/zeek/site/custom_scripts/icmp_flood/README.md`](../blue-team/zeek/site/custom_scripts/icmp_flood/README.md) for the test harness. The sliding-window threshold is experimental, and cross-host latency must not be reported until NTP synchronization has been verified.

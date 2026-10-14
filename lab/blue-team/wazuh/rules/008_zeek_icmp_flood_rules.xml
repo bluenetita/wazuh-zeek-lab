@@ -1,0 +1,19 @@
+<group name="zeek_custom,icmp_flood,">
+
+  <rule id="100940" level="8">
+    <if_sid>100900</if_sid>
+
+    <location type="pcre2">icmp_flood\.log$</location>
+
+    <field name="event_type" type="pcre2">^icmp_flood_suspected$</field>
+
+    <description>Zeek ICMP Flood suspected: victim $(dest_ip), $(observed_packets) mirrored ICMP observations within $(window_seconds)s, trigger rate $(threshold_trigger_pps) observations/sec, source attribution: $(source_attribution).</description>
+
+    <mitre>
+      <id>T1498.001</id>
+    </mitre>
+
+    <group>network_dos,icmp_flood,</group>
+  </rule>
+
+</group>

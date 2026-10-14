@@ -12,6 +12,7 @@ This directory contains **reduced and sanitized** evidence from results observed
 | `routeros-ar/2026-10-01/` | 5 OFF + 5 ON runs, probes, selected alerts, and metrics |
 | `ssh-bruteforce/` | Zeek/Wazuh samples and multi-host test matrix |
 | `mitm/` | reduced ARP/DHCP/DNS positive-path Zeek samples and a compact result index |
+| `icmp-flood/` | v1.4/v1.5 sliding-window comparison, test matrix, selected Zeek and Wazuh `100940` alerts |
 ## Publication criteria
 
 The repository may include:

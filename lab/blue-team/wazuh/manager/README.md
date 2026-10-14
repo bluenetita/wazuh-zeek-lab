@@ -1,6 +1,6 @@
 # Wazuh Manager Configuration
 
-The manager loads the custom decoder and rule directories already present in the project. The scanning/AppArmor update therefore does not require an additional `<decoder_dir>` or `<rule_dir>` entry when the existing manager configuration is retained.
+The manager loads the custom decoder and rule directories already present in the project. The ICMP Flood addition does not require an extra `<decoder_dir>` or `<rule_dir>` entry when those existing custom ruleset paths are retained. Copying documentation into a Git checkout does **not** deploy any rule to the live Wazuh Manager.
 
 ## New files loaded by the existing ruleset directories
 
@@ -9,7 +9,20 @@ etc/decoders/001_apparmor_decoder.xml
 etc/rules/002_zeek_rules_custom.xml
 etc/rules/005_zeek_scanning_correlation.xml
 etc/rules/006_app_armor.xml
+etc/rules/007_mitm_rules.xml
+etc/rules/008_zeek_icmp_flood_rules.xml
+etc/rules/9999_ssh_bruteforce_correlation.xml
 ```
+
+## ICMP Echo Flood
+
+Manager rule `100940` (level 8; ATT&CK `T1498.001`) uses existing JSON parent `100900`. Its event_location constraint requires `icmp_flood.log`. Use an event excerpt from [`../../../evidence/icmp-flood/`](../../../evidence/icmp-flood/README.md) and:
+
+```bash
+sudo /var/ossec/bin/wazuh-logtest -l /var/log/zeek-custom/icmp_flood.log
+```
+
+Automatic RouterOS quarantine is **not** enabled for this alert. The detector does not verify the packet source. Before deploying, compare the checked-in XML with the actual Manager configuration, back up affected runtime files, and verify rule-ID uniqueness.
 
 ## Validation
 

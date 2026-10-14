@@ -10,11 +10,21 @@
 
 ## Scanning detection limitations
 
-- `address_scan` and `icmp_host_scan` currently use a threshold of two unique targets in 60 seconds; this is intentionally aggressive for lab validation and can create false positives.
+- `address_scan` currently uses 20 unique targets / 60 s; `icmp_host_scan` uses 2 unique ICMP targets / 60 s. The latter is intentionally aggressive and can produce false positives. These two reconnaissance detectors are distinct from ICMP Echo Flood.
 - `port_scan` and `udp_port_scan` count unique destination ports within a short window and may miss slow reconnaissance spread across longer periods.
 - A scanner that changes source address or distributes probes across hosts can evade same-source aggregation.
 - Historical logs used both `scanner_ip` and `src_ip`; current correlation expects `src_ip`.
 - The custom scripts detect patterns, not the identity or intent of the scanning tool.
+
+## ICMP Echo Flood visibility and attribution
+
+- The detector processes IPv4 Echo Request **observations** at the OVS mirror, not necessarily distinct requests; ingress and egress of routed packets may both be counted.
+- It uses an exact sliding window per configured destination but only covers monitored IP targets and this ICMP message type.
+- The lab's `500` observations / `5 s` threshold is experimental; it is not calibrated to a legitimate-traffic baseline and cannot be deployed unchanged as a general DoS rule.
+- A packet's source IP may be spoofed. The Wazuh event deliberately records `source_attribution=unverified`; no automatic source-based isolation is justified from this event alone.
+- Rule `100940` detects a traffic-volume anomaly, not independently verified service degradation.
+- A prior v1.4 fixed-window miss was reproduced on a specific bounded PCAP; the repository does not measure an overall false-negative or false-positive rate.
+- Sensor-to-manager latency cannot be inferred until ZeekVM and WazuhVM clocks are synchronized and the test is repeated.
 
 ## Endpoint visibility
 
@@ -54,7 +64,7 @@
 ## Current scenario gaps
 
 - No dedicated custom correlation is documented for the later pivot/port-forward stage.
-- Dedicated SSH password-brute-force correlation for the final attack-chain stage is not part of this update.
+- The SSH brute-force scenario is documented with Zeek/sshd endpoint pair correlations; broader authentication-source coverage, replicated timing tests, and robust benign baselines remain future work.
 - Command-injection visibility is demonstrated primarily through AppArmor/Audit effects; a dedicated application-layer command-injection detector is not part of this update.
 
 ## Future improvements
@@ -63,5 +73,5 @@
 - Add regression tests for Zeek schemas, Wazuh decoders, and rule IDs.
 - Add explicit host identity/session correlation beyond source IP.
 - Hash and centrally protect evidence archives retained outside the public repository.
-- Add dedicated SSH authentication-failure detection/correlation if the final attack-chain stage is kept.
+- Extend the existing SSH failure/correlation coverage and replicate validation on representative benign and attack-like traffic.
 - Add response approval/recovery workflows where operational use requires them.
