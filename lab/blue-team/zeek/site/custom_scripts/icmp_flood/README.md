@@ -1,116 +1,121 @@
-# ICMP Echo Flood detector (Zeek v1.5)
+# ICMP Echo Flood — Zeek v1.7-rc2 (validated laboratory configuration)
 
-This detector was validated in the Proxmox cyber range in October 2026. It detects **anomalous ICMP Echo Request observation rates for explicitly monitored destinations**. It is not a general-purpose DDoS classifier and does not identify a genuine sender when source addresses can be spoofed.
+**Status (2026-10-19):** functional end-to-end validation completed on the Proxmox/OVS routed test path. `enforce` is an **experimental, topology-dependent** mirror-deduplication heuristic, not a general-purpose DDoS prevention system. This detector identifies the *destination*; the attacker's true identity remains unverified.
 
-## Files
+## Module layout
 
 | File | Purpose |
 |---|---|
-| `icmp_flood.zeek` | Detector used by the monitored Zeek instance |
-| `test_threshold.zeek` | Safe configuration override for offline regression / an isolated Zeek instance |
-| `test_multi_target.zeek` | Overrides monitoring targets for a two-destination experiment |
-| `run_offline_tests.sh` | Four regression tests using PCAP captures stored locally, outside Git |
+| `__load__.zeek` | Single module entry point: detector followed by policy |
+| `icmp_flood.zeek` | IPv4 Echo Request events, per-target exact sliding window, bounded timestamp ring, cooldown, JSON logging |
+| `dedup.zeek` | Bounded per-target fingerprint cache and TTL 1-step, one-to-one mirror-pair matching |
+| `config.zeek` | Site-specific protected subnets, exclusions, lab thresholds and `enforce` mode |
+| `test_threshold.zeek`, `test_multi_target.zeek` | Historical v1.5 PCAP regressions with `dedup_mode="off"`; **not** runtime policy |
+| `run_offline_tests.sh` | Executes historical four-PCAP tests with local, separately retained captures |
 
-Only `icmp_flood.zeek` is loaded from the production `local.zeek`. **Do not load the test overrides in ZeekControl.**
+Do not load `test_*.zeek` from the operational ZeekControl configuration.
 
-## Detection algorithm
+## Load with one line
 
-- Filter IPv4 `icmp_echo_request` observations by the configured destination set.
-- Keep the most recent `threshold_packets` observation timestamps per destination in a bounded circular buffer.
-- Trigger as soon as the last `threshold_packets` observations fall within a **sliding** interval of `window_length`.
-- Maintain per-destination cooldown. A sustained stream can trigger again after cooldown expires.
-- Keep separate, fixed-window diagnostic counters for comparison; these counters **do not** determine detection.
-
-The default configuration is:
+The lab's `/opt/zeek/share/zeek/site/local.zeek` needs only:
 
 ```zeek
-const monitored_targets: set[addr] = { 10.3.30.3 } &redef;
-const window_length: interval = 5sec &redef;
-const threshold_packets: count = 500 &redef;
-const alert_cooldown: interval = 30sec &redef;
-const log_path: string = "/var/log/zeek-custom/icmp_flood" &redef;
-const metrics_enabled: bool = F &redef;
+@load custom_scripts/icmp_flood
 ```
 
-Tune these settings for the monitored environment; 500 observations per five seconds is a **laboratory threshold**, not a validated production baseline. The ring requires `threshold_packets >= 1`, and memory grows with `threshold_packets` times the number of observed/monitored destinations.
+`__load__.zeek` loads `icmp_flood.zeek` and then `config.zeek`. Avoid adding network-specific `redef` statements to `local.zeek` or loading `icmp_flood.zeek` directly; doing so bypasses the policy file. This exact configuration mistake initially caused a missed alert for `10.3.20.2`, and was fixed and retested.
 
-## Placement and loading
+## Policy currently validated
 
-On the ZeekVM, copy `icmp_flood.zeek` to:
+The committed [`config.zeek`](config.zeek) enables automatic target selection inside **10.3.10.0/24**, **10.3.20.0/24** and **10.3.30.0/24**. Monitoring excludes destinations in `excluded_targets` (empty by default). The old `monitored_targets` static set is retained for backward compatibility. All target lists are explicit to avoid accidentally monitoring unrelated address space.
 
-```text
-/opt/zeek/share/zeek/site/custom_scripts/icmp_flood/icmp_flood.zeek
-```
+| Configuration | Value | Scope |
+|---|---|---|
+| `window_length` | 5 s | Exact sliding window, independent per destination |
+| `threshold_packets` | 500 | Number of **estimated distinct** Echo Requests required in `enforce` |
+| `alert_cooldown` | 30 s | Per destination; another destination can alert during cooldown |
+| `dedup_mode` | `enforce` | Experimentally validated; `observe` and `off` also supported |
+| `dedup_window` | 2 ms | Strict pairing interval |
+| `dedup_max_signatures` | 1024 | Capacity per active destination |
+| `dedup_max_payload_bytes` | 1024 | Larger payloads fail open (counted, not hashed) |
+| `target_idle_timeout` | 10 min | Unused destination sliding state expiration |
+| `dedup_idle_timeout` | 10 min | Unused destination signature-cache expiration |
+| `metrics_enabled` | `F` | Extra fixed-window diagnostic log disabled |
 
-Load it once from `/opt/zeek/share/zeek/site/local.zeek`:
+**Interpretation:** on the validated inter-VLAN path, OVS mirrors both pre-routing and post-routing Echo Requests. The detector originally observed about two frames per actual request. In `enforce`, likely mirror copies are excluded from the threshold ring. The field `observed_packets` remains `500` for schema compatibility, but `counting_basis` is now `estimated_unique_echo_requests`, **not** a verified unique packet count.
 
-```zeek
-@load custom_scripts/icmp_flood/icmp_flood.zeek
-```
+## Exact sliding window and ring
 
-The lab uses the OVS mirror interface `ens19.999`. Zeek logs are in JSON format via the existing site policy. The runtime log is `/var/log/zeek-custom/icmp_flood.log`; if enabling diagnostics for a test, a second stream `/var/log/zeek-custom/icmp_flood_metrics.log` is available. Leave metrics disabled in the deployed configuration unless needed.
+An `icmp_echo_request(c, info, id, seq, payload)` event is accepted only for a monitored IPv4 destination. The detector keeps only the latest `K = threshold_packets` timestamps per target in a circular buffer and triggers whenever the oldest-to-newest span of those K observations is **strictly less** than 5 seconds. It does not reset the ring at fixed boundaries. Fixed-window diagnostics are kept separately and cannot trigger the alert.
 
-The companion Wazuh agent reads **only** `/var/log/zeek-custom/icmp_flood.log` for this scenario; rule `100940` matches its location and `event_type=icmp_flood_suspected`. See the [scenario](../../../../../scenarios/icmp-flood/README.md) and [evidence](../../../../../evidence/icmp-flood/README.md).
+Memory is bounded **per active destination** by a ring of K timestamps and 1024 fingerprint slots, while total usage still depends on the number of active destinations and expires after inactivity. The implementation has not been benchmarked for arbitrary high-cardinality or production loads.
 
-## Alert fields
+## TTL decrement and one-to-one deduplication
 
-| Field | Interpretation |
+The [`dedup.zeek`](dedup.zeek) script computes a SHA-256 fingerprint over observed source, destination, Echo ID/sequence and payload **without TTL**. A newer observation is a candidate mirror copy only if all hold:
+
+1. Same fingerprint and destination;
+2. It follows the previous observation in strictly less than 2 ms;
+3. Previous observed IPv4 TTL is **exactly 1 greater** than the current TTL (lab-verified `64 -> 63`);
+4. The earlier reference has not already been consumed by another match.
+
+Same-TTL repeats, reversed TTL sequences, out-of-window observations, and oversized payloads fail open and count normally. This reduces accidental collisions relative to the old 10-ms fingerprint-only method, but does **not** prove packet identity. A maliciously or naturally identical pair with matching TTL progression might be misclassified, and other network paths may not follow the same TTL ordering. Only enable `enforce` after topology-specific verification.
+
+## Data contract and Wazuh
+
+Zeek writes `/var/log/zeek-custom/icmp_flood.log` as JSON. `wazuh-agent` collects that exact file, and Manager rule `100940` (level 8, ATT&CK T1498.001) matches `event_type=icmp_flood_suspected` and the log's location. A change to the **wording** of the repository's rule description makes it valid for both raw and estimated-unique modes; the rule ID, matching logic and severity are unchanged.
+
+| JSON field | Meaning |
 |---|---|
+| `dest_ip` | Monitored destination (not authenticated attacker source) |
 | `event_type` | `icmp_flood_suspected` |
-| `dest_ip` | Destination under observation; **not** attacker attribution |
-| `observed_packets` | Threshold observation count at trigger (normally 500) |
-| `window_seconds` | Maximum sliding interval (normally 5 s) |
-| `observed_pps` | Nominal count / 5 s, **not** effective packet rate at trigger |
-| `threshold_elapsed_seconds` | Span from oldest to newest observation among the last K at trigger |
-| `threshold_trigger_pps` | K divided by the measured span |
 | `alert_phase` | `sliding_threshold_crossed` |
-| `detection_reason` | `destination_echo_sliding_window_threshold` |
-| `source_attribution` | `unverified` |
-| `observation_scope` | `mirrored_traffic_not_deduplicated` |
+| `dedup_mode` | `observe`, `enforce` or `off` |
+| `counting_basis` | `raw_mirror_observations` or `estimated_unique_echo_requests` |
+| `dedup_match_policy` | `ttl_decrement_one_to_one` in v1.7-rc2 |
+| `observed_packets` | Configured threshold (`500`); **consult counting_basis** |
+| `threshold_elapsed_seconds` | Span between oldest and newest of the last K counted observations |
+| `threshold_trigger_pps` | K/span, per second, in the selected counting basis |
+| `raw_observations_in_diagnostic_window` | Current fixed diagnostic-window raw count, *not* the trigger sliding-window raw count |
+| `estimated_unique_in_diagnostic_window` | Current fixed-window estimate of countable observations |
+| `duplicate_candidates_in_diagnostic_window` | Current fixed-window count of matched candidates |
+| `source_attribution` | `unverified`; source-based RouterOS quarantine is **not enabled** |
 
-On the validated OVS routed path a single ICMP Echo Request was generally seen twice (ingress + egress). **500 Zeek observations are not necessarily 500 distinct requests.** Do not indiscriminately divide by two: topology, direction, drops, and VLAN paths can change the duplication ratio.
+Diagnostic fields above describe a fixed window that happens to be active when the sliding trigger occurs. Do not misrepresent them as exact counts inside the trigger's rolling window. The nominal field `observed_pps = 500 / 5 = 100` is not the measured trigger intensity.
 
-`threshold_trigger_pps` is an average rate over the threshold observation span, not a count of unique wire packets and not a measure of time-to-Wazuh.
+## Live validation, 2026-10-19
 
-## Offline regression
+- `observe` mode: 500 raw mirror observations, 250 estimated distinct, 250 candidates, Wazuh rule `100940` generated.
+- Independently verified mirroring: `tcpdump` saw **20 observations from 10 ping requests**, each pair with identical IP ID/Echo ID/sequence, TTL `64 -> 63`, and 25–77 microseconds separation; 0 reported capture drops for this short sample.
+- `enforce` in v1.7-rc1: a 400-ping bounded test produced no new matching alert, while 600 pings / 2.994 seconds generated an alert at 500 estimated distinct requests (`999` raw and `499` candidates at trigger); Wazuh rule `100940` generated.
+- **v1.7-rc2**: 600 ping requests / 2.992 seconds produced a threshold alert with `dedup_match_policy=ttl_decrement_one_to_one`, `999` raw diagnostic observations, `500` estimated distinct and `499` candidate mirrors. Wazuh rule `100940` received the same Zeek event timestamp.
 
-With locally retained PCAPs, Zeek, Bash, `awk`, and `jq` installed:
+These are controlled functional checks, not a population-level false-positive rate or proof of service outage. See [the scenario](../../../../../scenarios/icmp-flood/README.md), [validation](../../../../../docs/icmp-flood-validation-2026-10.md), and [sanitized evidence](../../../../../evidence/icmp-flood/README.md).
+
+## Historical offline regression
+
+Run the existing four-PCAP historical sliding-window test in a separate Zeek process (PCAP files excluded from the public repo):
 
 ```bash
 cd /path/to/icmp_flood
 PCAP_DIR="$HOME/icmp-debug" bash ./run_offline_tests.sh
 ```
 
-Expected PCAP names in `PCAP_DIR` (not committed):
+The test overrides explicitly set `dedup_mode="off"`, reproducing the original **raw** v1.5 counts and the fixed/sliding boundary case. They do **not** by themselves validate the v1.7 TTL pairing. Live `tcpdump` and Zeek/Wazuh reduced events provide the latter evidence.
 
-```text
-icmp-calibration-long.pcap
-icmp-calibration-298.pcap
-icmp-multiwindow.pcap
-icmp-boundary-v1_4.pcap
-```
-
-Expected cases: LOW 320 observations / 0 alerts, HIGH 596 / 1, MULTI 1600 / 1, BOUNDARY 802 / 1. In the BOUNDARY capture, the older v1.4 detector saw 366 + 436 observations in separate fixed windows and emitted no alert. The v1.5 detector emitted at Unix timestamp `1791974668.501825`, exactly where the independently computed sliding counter first reached 500 observations.
-
-The script **depends on captures from this experimental campaign** and does not make the repository self-contained without those captures. PCAPs are excluded from public Git publication because they can contain unrelated lab traffic.
-
-## Verification and rollback
-
-Before modifying the live VM, back up the destination file, then run:
+## Operational verification and rollback
 
 ```bash
 sudo /opt/zeek/bin/zeekctl check
-sudo /opt/zeek/bin/zeekctl deploy
 sudo /opt/zeek/bin/zeekctl status
 ```
 
-On failure, restore the backup and re-run `check` and `deploy`. This repository update **does not execute deployment commands**.
+Only after an approved configuration change, run `sudo /opt/zeek/bin/zeekctl deploy` and verify status; deploy restarts sensor workers and may temporarily interrupt observation. Preserve a backup of the three operational scripts plus `__load__.zeek` and `local.zeek`. The source repository does not deploy automatically.
 
-## Limitations
+## Limits
 
-- Counts mirrored observations without flow-path de-duplication.
-- No reliable sender identity under IP source spoofing; automatic source-IP quarantine is deliberately excluded.
-- Detection considers IPv4 Echo Requests for configured targets; it does not cover all ICMP traffic or every DDoS vector.
-- A threshold crossing indicates an anomaly in this controlled baseline, not independently verified service unavailability.
-- Timings reported from Zeek packet timestamps are intra-sensor; inter-VM latency measurements require synchronized clocks.
-- CPU/RSS observations reflect the complete test Zeek process and a sampled interval, not a per-script profiler.
+- Validated on a specific lab mirror path and a small number of hosts. A TTL-based match may behave differently on asymmetric paths or packet generators with repeated signatures.
+- An alert indicates a configured traffic-rate anomaly, **not** proven denial of service; 400/600 controlled pings both had 0% loss in observed tests.
+- NTP was verified on both ZeekVM and WazuhVM on 2026-10-16 using `systemd-timesyncd`. Later Zeek-to-Wazuh timestamp differences are available as individual observations; they are not isolated network latencies or an aggregated performance claim.
+- `source_attribution=unverified` and no automatic source quarantine, especially with IP spoofing.
+- Full PCAPs, detailed packet payloads and credential-bearing artifacts are intentionally excluded.

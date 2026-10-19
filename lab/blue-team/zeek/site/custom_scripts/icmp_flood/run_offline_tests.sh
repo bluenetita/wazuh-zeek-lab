@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Zeek v1.5 offline regression. Reads PCAPs, writes only into a fresh directory.
+# Historical Zeek v1.5 raw-observation offline regression, using current detector in dedup_mode=off.
+# Does not validate v1.7 TTL pairing; that feature is documented using live lab evidence.
 set -euo pipefail
 
 ZEEK_BIN="${ZEEK_BIN:-/opt/zeek/bin/zeek}"

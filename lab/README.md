@@ -56,8 +56,8 @@ The two additional clones are used mainly to validate correlation behavior and d
 | [RouterOS Active Response](scenarios/active-response/README.md) | Validated | 5 OFF + 5 ON runs with quarantine and connectivity probe |
 | [SSH brute force / Endpoint Normalizer](scenarios/ssh-bruteforce/README.md) | Validated | Pair correlation, mismatch tests, fan-out `120940`, fan-in `120941` |
 | [MITM / Adversary-in-the-Middle](scenarios/mitm/README.md) | Validated (positive Zeek path) | ARP, rogue DHCP, and DNS-spoofing indicators; Wazuh rules `100930-100932` |
-| [ICMP Echo Flood](scenarios/icmp-flood/README.md) | Functionally validated; threshold tuning pending | Zeek v1.5 sliding window, boundary regression, independent destinations, Wazuh `100940` |
-The repository does not mark scenarios as completed when this snapshot does not contain enough supporting evidence. The ICMP Flood scenario is functionally validated but the lab threshold and NTP-dependent latency remain open.
+| [ICMP Echo Flood](scenarios/icmp-flood/README.md) | Functionally validated (v1.7-rc2) | Protected subnets, sliding window, topology-specific OVS TTL-pair deduplication, Wazuh `100940` |
+The repository does not mark scenarios as completed when this snapshot does not contain enough supporting evidence.
 ## Recent results
 ### SSH Endpoint Normalizer
 
@@ -81,11 +81,11 @@ The campaign contains 5 runs with Active Response disabled and 5 with it enabled
 
 The VLAN 20 campaign adds separate Zeek detections for protected IP/MAC mismatches, unexpected DHCP server responses on the static segment, and protected public DNS names returning private IPv4 answers. Reduced positive-path Zeek evidence is published under `evidence/mitm/`; reusable operational attack commands and full raw logs remain outside the public repository.
 
-### ICMP Echo Flood v1.5
+### ICMP Echo Flood: final v1.7-rc2 lab stage
 
-The latest campaign detects excessive mirrored ICMP Echo Request observations directed to selected hosts. An exact per-destination sliding window fixes a v1.4 fixed-window false negative: one 802-observation capture produced **0 alerts in v1.4** (366 + 436 in adjacent windows) and **1 alert in v1.5** (maximum 800 observations in any rolling 5 s interval). Multi-destination controls, sustained cooldown (30 s), spoofed apparent source traffic, and a Wazuh level-8 alert (`100940`, `T1498.001`) were verified. The lab threshold of **500 observations in five seconds** is not calibrated for production; mirrored packets may be seen twice. Inter-VM alert-ingestion latency is **not measured** because NTP synchronization was pending.
+The detector tracks destinations in the three approved internal /24 networks, with an exact sliding window (500 *estimated distinct* Echo Request observations in less than 5 s), separate cooldown per destination, and bounded inactive-state expiry. The lab's OVS route mirrors both pre- and post-routing copies; a one-to-one TTL-decrement matching heuristic (`64 -> 63`, strictly under 2 ms) can exclude likely mirror copies in `enforce` mode. Wazuh rule `100940` ingests the corresponding `icmp_flood.log` JSON events without asserting the attacker identity. This is **experimental and path-specific**; it does not establish actual denial of service.
 
-See the [scenario](scenarios/icmp-flood/README.md), [Zeek detector](blue-team/zeek/site/custom_scripts/icmp_flood/README.md), [validation note](docs/icmp-flood-validation-2026-10.md), and [reduced evidence](evidence/icmp-flood/README.md).
+See the [scenario](scenarios/icmp-flood/README.md), [current Zeek module](blue-team/zeek/site/custom_scripts/icmp_flood/README.md), [technical validation](docs/icmp-flood-validation-2026-10.md), and [reduced October 2026 evidence](evidence/icmp-flood/README.md).
 
 ## Repository structure
 
@@ -126,7 +126,7 @@ blue-team/zeek/site/custom_scripts/reverse_shell/reverse_shell_movement.zeek
 blue-team/zeek/site/custom_scripts/scanning/address_scan.zeek
 blue-team/zeek/site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek
 blue-team/zeek/site/custom_scripts/mitm/
-blue-team/zeek/site/custom_scripts/icmp_flood/icmp_flood.zeek
+blue-team/zeek/site/custom_scripts/icmp_flood/ (__load__.zeek, config.zeek, dedup.zeek, icmp_flood.zeek)
 ```
 ### Wazuh
 

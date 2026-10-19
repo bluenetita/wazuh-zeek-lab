@@ -28,7 +28,7 @@ Field names in Zeek scripts, Wazuh rules, and evidence examples must remain cons
 
 ## ICMP Echo Flood path
 
-Zeek writes JSON records to `/var/log/zeek-custom/icmp_flood.log` when the destination-specific sliding window crosses its experimental threshold. The ZeekVM agent explicitly collects that file, and Wazuh Manager rule `100940` uses both the event's `event_type` and the log **location**. To validate a sample manually:
+Zeek v1.7-rc2 writes JSON records to `/var/log/zeek-custom/icmp_flood.log` when the per-destination exact sliding window crosses its experimental threshold; `dedup_mode=enforce` counts estimated distinct Echo Request observations matched against the lab OVS TTL-pair baseline, not raw mirror observations. The ZeekVM agent explicitly collects that file, and Wazuh Manager rule `100940` uses both the event's `event_type` and the log **location**. To validate a sample manually:
 
 ```bash
 sudo /var/ossec/bin/wazuh-logtest -l /var/log/zeek-custom/icmp_flood.log

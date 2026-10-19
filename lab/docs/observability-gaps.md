@@ -18,13 +18,13 @@
 
 ## ICMP Echo Flood visibility and attribution
 
-- The detector processes IPv4 Echo Request **observations** at the OVS mirror, not necessarily distinct requests; ingress and egress of routed packets may both be counted.
-- It uses an exact sliding window per configured destination but only covers monitored IP targets and this ICMP message type.
-- The lab's `500` observations / `5 s` threshold is experimental; it is not calibrated to a legitimate-traffic baseline and cannot be deployed unchanged as a general DoS rule.
+- The OVS mirror can expose both pre-routing and post-routing IPv4 Echo Requests. In v1.7-rc2 `enforce`, TTL one-to-one pairing (same signature, 64 -> 63 transition on the tested route, under 2 ms) filters **candidate duplicates**, not provably identical packets. Other routes, ordering and adversarial collisions may defeat this heuristic.
+- It uses an exact sliding window independently per destination, automatically selecting targets within configured protected subnet sets. Only IPv4 Echo Requests are covered.
+- The lab threshold is `500 / 5 s` using `estimated_unique_echo_requests` with `enforce` (previously raw mirror observations in v1.5). It is not calibrated to legitimate workload and must not be copied unchanged as a general DoS rule.
 - A packet's source IP may be spoofed. The Wazuh event deliberately records `source_attribution=unverified`; no automatic source-based isolation is justified from this event alone.
 - Rule `100940` detects a traffic-volume anomaly, not independently verified service degradation.
 - A prior v1.4 fixed-window miss was reproduced on a specific bounded PCAP; the repository does not measure an overall false-negative or false-positive rate.
-- Sensor-to-manager latency cannot be inferred until ZeekVM and WazuhVM clocks are synchronized and the test is repeated.
+- NTP was verified on both ZeekVM and WazuhVM on 2026-10-16. Later single-run event-to-alert timestamp differences are available, but encompass logging and processing and do not establish a repeatable latency distribution.
 
 ## Endpoint visibility
 

@@ -26,7 +26,7 @@ The mirror interface used in the lab is `ens19.999`.
 | `site/custom_scripts/scanning/address_scan.zeek` | TCP address-scan detector |
 | `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | SSH detection keyed by source/destination pair |
 | `site/custom_scripts/mitm/` | ARP binding, rogue DHCP, and protected-DNS MITM indicators |
-| `site/custom_scripts/icmp_flood/icmp_flood.zeek` | IPv4 ICMP Echo Request anomaly detector, exact per-destination sliding window |
+| `site/custom_scripts/icmp_flood/` | IPv4 ICMP Echo Flood: module loader, subnet policy, TTL-pair deduplication and per-destination exact sliding window |
 Other scripts already present in the repository (`reverse_shell.zeek`, malware/download detection, scanning loader, logging, exfiltration, and other detectors) should be preserved.
 ## Custom logs
 
@@ -111,8 +111,10 @@ Run `zeekctl deploy` only when the sensor should actually be reloaded; a deploy 
 
 Zeek does not directly observe local processes, local commands, filesystem changes, or encrypted application payloads. For those aspects, the project combines Zeek with Wazuh, Auditd, and, in mitigation scenarios, AppArmor.
 
-## ICMP Echo Flood (v1.5)
+## ICMP Echo Flood (v1.7-rc2)
 
-The `icmp_flood` custom policy monitors the explicitly configured destination set using a sliding window of five seconds and a threshold of 500 **mirror observations**; it does not attempt sender attribution. The detector emits JSON to `/var/log/zeek-custom/icmp_flood.log`, consumed by Wazuh rule `100940`. Detailed metrics are disabled by default. A bounded timestamp ring avoids keeping an unlimited history of packets. The OVS mirror may duplicate routed Echo Requests, so the threshold is lab-specific.
+The detector is loaded as a directory (`@load custom_scripts/icmp_flood`) so site-specific settings live in `config.zeek`, outside `local.zeek`. It monitors destinations in the three explicit laboratory VLAN subnets (10/20/30). The exact five-second sliding-window threshold is 500 **estimated distinct** Echo Request observations in `dedup_mode="enforce"`, using a lab-verified, one-to-one TTL decrement (`64 -> 63`) mirror-pair heuristic within 2 ms. The heuristic is not general-purpose packet identity and must be re-evaluated on a different path.
 
-The detector was regression tested against a v1.4 boundary false negative, including a PCAP where two adjacent fixed windows had 366 and 436 observations but a rolling five-second window had 800. See [the detector README](site/custom_scripts/icmp_flood/README.md) and [the experiment](../../scenarios/icmp-flood/README.md).
+A ring of K=500 timestamps, bounded 1024-signature dedup cache and ten-minute idle expiry limit *per-destination* memory; the 30-second cooldown is independent per destination. The detector emits JSON `icmp_flood.log` consumed by Wazuh rule `100940`. Packet source authenticity is unverified, and this event does not automatically quarantine a source IP. The earlier v1.5 PCAP regressions remain available with `dedup_mode="off"` for raw-observation comparability.
+
+See [the detector README](site/custom_scripts/icmp_flood/README.md), [scenario](../../scenarios/icmp-flood/README.md), and [October evidence](../../evidence/icmp-flood/README.md).

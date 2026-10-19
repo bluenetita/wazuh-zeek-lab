@@ -1,0 +1,8 @@
+date_utc	detector_version	dedup_mode	dest_ip	ping_transmitted	ping_elapsed_s	raw_diagnostic_observations_at_alert	estimated_distinct_diagnostic_observations_at_alert	diagnostic_duplicate_candidates_at_alert	threshold_elapsed_seconds	wazuh_rule	zeek_to_wazuh_event_timestamp_delta_seconds	notes
+2026-10-16	v1.5	raw	10.3.30.3	400	4.390	500			2.738697	100940	1.477332	oldest post-NTP individual alert; no dedup
+2026-10-16	v1.6-rc2	raw	10.3.30.3	400	4.390	500			2.739168	100940	1.955721	manual target already in v1.5
+2026-10-16	v1.6-rc2	raw	10.3.20.2	400	4.388	500			2.737683	100940	1.594827	new target after correcting local.zeek @load
+2026-10-19	v1.7-rc1	observe	10.3.20.2			500	250	250	2.738510	100940	2.171088	fingerprint shadow-only metrics; no threshold change
+2026-10-19	v1.7-rc1	enforce	10.3.20.2	400	4.389					not separately checked		negative control: no matching enforce Zeek alert observed
+2026-10-19	v1.7-rc1	enforce	10.3.20.2	600	2.994	999	500	499	2.493880	100940	0.487992	fingerprint dedup positive; trigger diagnostic counts
+2026-10-19	v1.7-rc2	enforce	10.3.20.2	600	2.992	999	500	499		100940	2.097780	ttl_decrement_one_to_one; final E2E match

@@ -1,0 +1,3 @@
+{"timestamp":"2026-10-19T13:32:34.908+0000","rule_id":"100940","zeek_ts":"1792416752.736912","dest_ip":"10.3.20.2","dedup_mode":"observe","counting_basis":"raw_mirror_observations"}
+{"timestamp":"2026-10-19T13:56:15.083+0000","rule_id":"100940","zeek_ts":"1792418174.595008","dest_ip":"10.3.20.2","dedup_mode":"enforce","counting_basis":"estimated_unique_echo_requests"}
+{"timestamp":"2026-10-19T14:20:32.507+0000","rule_id":"100940","zeek_ts":"1792419630.409220","dest_ip":"10.3.20.2","event_type":"icmp_flood_suspected","location":"/var/log/zeek-custom/icmp_flood.log","dedup_mode":"enforce","dedup_match_policy":"ttl_decrement_one_to_one","counting_basis":"estimated_unique_echo_requests"}

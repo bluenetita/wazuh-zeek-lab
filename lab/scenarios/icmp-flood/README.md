@@ -1,6 +1,6 @@
-# ICMP Echo Flood: detection, sliding-window correction and Wazuh integration
+# ICMP Echo Flood: exact sliding detection, subnet monitoring and OVS mirror deduplication
 
-**Status:** functionally validated in the controlled Proxmox cyber range (October 2026). **Not** a statistically calibrated production intrusion-detection rule.
+**Status (2026-10-19):** v1.7-rc2 validated end-to-end on the routed test path (Zeek + Wazuh). Not a statistically calibrated production intrusion-detection rule. Historic v1.4/v1.5 evidence is retained below and must not be conflated with the v1.7 deduplicated counting basis.
 
 ## Objective
 
@@ -30,9 +30,17 @@ ServerDB (10.3.30.3) ----- VLAN 30 --------+
                            Rule 100940, level 8, T1498.001
 ```
 
-The tested routed path produced approximately **two mirror observations per ICMP Echo Request** (pre- and post-routing). Zeek records observations, not reliably de-duplicated unique packets. A separate locally retained PCAP and an independent sliding-window calculation were used to validate the boundary case.
+The historical v1.5 path produced approximately **two mirror observations per ICMP Echo Request** (pre- and post-routing). The v1.5 detector counted mirrored observations; the later v1.7 estimate uses a separately validated TTL-pair heuristic. A separate locally retained PCAP and an independent sliding-window calculation were used to validate the boundary case.
 
-## Implementation snapshot
+## Current deployment: v1.7-rc2
+
+The operational Zeek module is loaded from `local.zeek` using **only** `@load custom_scripts/icmp_flood`. Its [`__load__.zeek`](../../blue-team/zeek/site/custom_scripts/icmp_flood/__load__.zeek) loads the detector and the subnet-specific [`config.zeek`](../../blue-team/zeek/site/custom_scripts/icmp_flood/config.zeek). It monitors IPv4 destinations inside VLANs 10, 20 and 30 (`10.3.10.0/24`, `10.3.20.0/24`, `10.3.30.0/24`), keeping independent sliding windows and 30-second cooldowns per target.
+
+The detector uses `dedup_mode="enforce"` **only in this controlled lab**, with a two-millisecond, one-to-one TTL decrement (`64 -> 63`) mirror-pair policy. It requires 500 **estimated distinct** Echo Requests in strictly less than five seconds to generate a JSON alert; `estimated distinct` is not cryptographically proven packet uniqueness. A 10-minute idle-time expiry releases per-target state, and `dedup_max_signatures=1024` bounds each active target's signature ring. Automatic RouterOS quarantine is not enabled for this detector because the source IP may be spoofed.
+
+See [the current detector module README](../../blue-team/zeek/site/custom_scripts/icmp_flood/README.md) for the precise matching conditions and fields.
+
+## Historical v1.5 implementation snapshot
 
 | Setting | Value in tested laboratory |
 |---|---|
@@ -89,9 +97,24 @@ Controlled lab traffic used an unassigned laboratory address `10.3.20.250` as th
 
 In the bounded ~200 Echo Request/s scenario, Zeek processed 4800 mirrored observations and the instance reported 12145 total packets received, **0 dropped and 0 unprocessed**. The 20-second `pidstat` sample reported mean Zeek process CPU ~0.70% and mean RSS 248809 KiB (~243 MiB). These figures reflect the **whole Zeek instance** and the sampled period, not the incremental cost of only the ICMP detector or a maximum sustainable rate. Additional replicated, aligned baseline/loaded trials are needed before performance claims.
 
+## Subsequent v1.6/v1.7 results (16–19 October 2026)
+
+| Version / configuration | Bounded experiment | Zeek | Wazuh |
+|---|---|---|---|
+| v1.6-rc2 subnet monitoring | Client `10.3.20.2` -> ServerDB `10.3.30.3`, 400 ping requests | 500 raw observations / 2.739 s | Rule `100940` |
+| v1.6-rc2 subnet monitoring | ServerDB `10.3.30.3` -> newly monitored Client `10.3.20.2`, 400 requests | 500 raw observations / 2.738 s | Rule `100940` |
+| v1.7-rc1 `observe` | ServerDB -> Client, bounded test | 500 raw / 250 estimated distinct / 250 candidate mirrors | Rule `100940` |
+| v1.7-rc1 `enforce`, negative control | 400 requests / 4.389 s | No new matching `enforce` alert in inspected log | Not asserted separately |
+| v1.7-rc1 `enforce`, positive | 600 requests / 2.994 s | 999 raw / 500 estimated distinct / 499 duplicate candidates at trigger | Rule `100940` |
+| **v1.7-rc2 `enforce`**, TTL one-to-one | **600 requests / 2.992 s** | **999 raw / 500 estimated distinct / 499 candidates; match policy `ttl_decrement_one_to_one`** | **Rule `100940` with same Zeek event timestamp** |
+
+A dedicated `tcpdump` sanity check of ten normal ping requests recorded twenty mirrored observations. Each original request was seen with the same IP ID, ICMP identifier and sequence number, with TTL 64 before and 63 after routing; the pair separation was 25–77 µs, and this short capture reported zero kernel drops. This independently supports the chosen pair-matching heuristic **on the tested network path only**.
+
+NTP synchronization was verified on both VMs on 16 October. In the final v1.7-rc2 test the Zeek event `1792419630.409220` and Wazuh alert `2026-10-19T14:20:32.507+0000` corresponded to a timestamp difference of **2.097780 seconds**. This covers multiple logging/transport/processing stages, not solely wire latency. It is a single observation and must not be generalized. All reduced records are in [the evidence directory](../../evidence/icmp-flood/README.md).
+
 ## Example controlled verification
 
-Only run against authorized, isolated lab targets. For a short, finite positive check from the Client Linux VM:
+Only run against authorized, isolated lab targets. The following is the **historical v1.5 raw-observation** positive check; **it is not guaranteed to reach 500 estimated-distinct observations in v1.7 `enforce`**:
 
 ```bash
 sudo ping -n -q -i 0.01 -c 400 -W 1 10.3.30.3
@@ -119,12 +142,14 @@ Pasting JSON into `wazuh-logtest` **without** `-l` matches only parent `100900`,
 
 ## Reliability and limitations
 
-1. **Threshold not calibrated:** `500/5s` is experimental and depends on mirrored observation counts; do not interpret it as 500 unique packets or use it unchanged on unrelated sensor paths.
+1. **Threshold not calibrated:** `500/5s` is experimental. In historical v1.5 it counts mirrored observations; in v1.7 `enforce` it counts **heuristically distinct** observations. Neither basis is a verified universal packet rate; do not reuse the threshold on unrelated paths.
 2. **Source authenticity:** IP addresses in ICMP packets can be spoofed. This detection does not establish attacker identity and is not wired to source-based RouterOS quarantine.
 3. **No service-outage proof:** successful alerting does not demonstrate destination exhaustion, packet loss or actual denial of service.
-4. **Inter-VM time:** NTP on ZeekVM/WazuhVM had not synchronized during these tests. `Zeek.ts` and Wazuh manager alert timestamps are **not** used to compute delivery latency. The recorded `threshold_elapsed_seconds` is within the Zeek observation sequence, not Zeek-to-Wazuh latency.
+4. **Inter-VM time:** NTP was not synchronized during the **early v1.5** trials, so historical cross-VM differences are invalid as latency measures. NTP was verified on both VMs on 2026-10-16; the later v1.6/v1.7 table reports only individual differences. The recorded `threshold_elapsed_seconds` is within the Zeek observation sequence, not Zeek-to-Wazuh latency.
 5. **Packet capture warnings:** a checksum-offloading warning appeared in some live runs. In the isolated tests the ICMP observations were parsed and the Zeek capture statistics reported zero drops; this does not establish universal absence of packet-loss elsewhere.
 6. **Coverage:** this is an Echo Request anomaly detector for configured IPv4 destinations. It does not detect all network floods and is not a production DDoS mitigation system.
 7. **Reproducibility:** reduced alert samples, a test index and the Zeek regression harness are published. Full PCAP files, complete raw telemetry and credentials are intentionally excluded.
 
 See [`../../evidence/icmp-flood/README.md`](../../evidence/icmp-flood/README.md), the [detector README](../../blue-team/zeek/site/custom_scripts/icmp_flood/README.md), and [`../../docs/icmp-flood-validation-2026-10.md`](../../docs/icmp-flood-validation-2026-10.md).
+
+8. **TTL deduplication remains heuristic:** one-to-one TTL transitions can still pair distinct crafted packets; other routing topologies may not exhibit `64 -> 63` in the same observation order.

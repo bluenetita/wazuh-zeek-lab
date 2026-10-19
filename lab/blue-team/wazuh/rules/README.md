@@ -14,7 +14,7 @@ This directory contains the custom laboratory ruleset for network telemetry, end
 | `006_app_armor.xml` | `130900-130983` | AppArmor denial classification and repeated-activity correlation |
 | `1004_auditd_rules.xml` | `100700-100704` | SUID, root, `sudo`, `su`, and downloads-directory execution |
 | `007_mitm_rules.xml` | `100930-100932` | ARP mismatch, unexpected DHCP responder, protected DNS answers |
-| `008_zeek_icmp_flood_rules.xml` | `100940` | Destination-focused ICMP Echo Flood anomaly |
+| `008_zeek_icmp_flood_rules.xml` | `100940` | Destination-focused IPv4 ICMP Echo Flood; interpret counts using Zeek `counting_basis` (`raw_mirror_observations` vs `estimated_unique_echo_requests`) |
 | `9999_ssh_bruteforce_correlation.xml` | `100920-100921`, `120935-120941` and other SSH rules | SSH candidate confirmation, pair-based correlations and fan-in/fan-out |
 
 ## Scanning base rules

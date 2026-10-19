@@ -7,7 +7,7 @@
 
     <field name="event_type" type="pcre2">^icmp_flood_suspected$</field>
 
-    <description>Zeek ICMP Flood suspected: victim $(dest_ip), $(observed_packets) mirrored ICMP observations within $(window_seconds)s, trigger rate $(threshold_trigger_pps) observations/sec, source attribution: $(source_attribution).</description>
+    <description>Zeek ICMP Echo Flood suspected: destination $(dest_ip), threshold count $(observed_packets) within $(window_seconds)s; review counting_basis and dedup_mode for observation semantics; source attribution $(source_attribution).</description>
 
     <mitre>
       <id>T1498.001</id>

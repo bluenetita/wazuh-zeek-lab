@@ -143,4 +143,4 @@ redef ignore_checksums=T;
 @load custom_scripts/mitm
 
 # ICMP Flood detection
-@load custom_scripts/icmp_flood/icmp_flood.zeek
+@load custom_scripts/icmp_flood
