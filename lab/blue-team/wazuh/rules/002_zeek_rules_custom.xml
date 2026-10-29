@@ -30,21 +30,6 @@
     <group>zeek_custom,reverse_shell_stage,</group>
   </rule>
 
-  <!-- Data Exfiltration -->
-  <rule id="100913" level="3">
-    <if_sid>100900</if_sid>
-    <location>/var/log/zeek-custom/data_exfiltration.log</location>
-    <field name="event_type">baseline_completed</field>
-    <description>Zeek: Baseline completed and dynamic threshold calculated. src_ip: $(src_ip)</description>
-    <group>zeek_custom,data_exfiltration,</group>
-  </rule>
-  <rule id="100914" level="8">
-    <if_sid>100900</if_sid>
-    <location>/var/log/zeek-custom/data_exfiltration.log</location>
-    <field name="event_type">possible_data_exfiltration</field>
-    <description>Zeek: Total outgoing bytes exceeding the dynamic threshold. Possible Data Exfiltration. src_ip: $(src_ip), dest_ip: $(dest_ip):$(dest_port)</description>
-    <group>zeek_custom,data_exfiltration,</group>
-  </rule>
 
   <!-- Scanning (nmap) -->
   <rule id="100915" level="6">

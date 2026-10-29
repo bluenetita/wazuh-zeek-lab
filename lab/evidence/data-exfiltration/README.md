@@ -1,77 +1,13 @@
-# Data-Exfiltration Evidence
+# Data Exfiltration — reduced post-migration evidence
 
-This directory is reserved for reduced and sanitized artifacts produced during the controlled data-exfiltration validation scenario.
+This folder includes **only synthesized summaries transcribed from the actual terminal results** of the 28 October 2026 regression and no full traffic captures or raw archives.
 
-## Related scenario
+- [`post-migration-validation-2026-10.tsv`](post-migration-validation-2026-10.tsv): T01–T10 controlled test outcomes. The ten PASS statuses refer to the final Zeek/Wazuh schema after migration.
+- [`t09-restart-check.tsv`](t09-restart-check.tsv): original and restarted process identifiers plus the rotation marker reported by T09. These identifiers are ephemeral to this lab run.
+- [`README.md`](README.md): evidence scope and limitations.
 
-```text
-scenarios/data-exfiltration/README.md
-```
+**Provenance:** T01–T06 from `run.sh full` (2026-10-28 16:59–17:32 UTC), T07 from the warm-up-fixed `extended_run.sh t07` (21:53–22:11 UTC), T08 from `t08-train.sh` followed by `extended_run.sh t08` (22:15–23:15 UTC), T09 from its `t09-pre` and `t09-post` checkpoint (23:20–23:29 UTC), and T10 from `extended_run.sh t10` (17:55–18:25 UTC). These are timestamps printed by the validation tools, with UTC `Z` labels. The original terminal traces and results directories are retained outside the public repository.
 
-## Recommended artifacts
+This evidence supports controlled **functional detection/correlation** only. A PASS does not establish production-wide performance, exfiltration of sensitive content, host process attribution, or real attacker identity.
 
-A useful evidence set can include:
-
-```text
-baseline-completed-sample.json
-possible-data-exfiltration-sample.json
-wazuh-rule-100913-sample.json
-wazuh-rule-100914-sample.json
-```
-
-Only add files that were actually produced during a validated test.
-
-## Minimum fields
-
-### Baseline evidence
-
-Preserve fields such as:
-
-- `event_type`;
-- `src_ip`;
-- `baseline_avg_bytes`;
-- `baseline_stddev_bytes`;
-- `baseline_max_bytes`;
-- `dynamic_threshold`;
-- `window_interval`.
-
-### Detection evidence
-
-Preserve fields such as:
-
-- `event_type`;
-- `src_ip`;
-- `dest_ip`;
-- `dest_port`;
-- `dest_proto`;
-- `top_dest_bytes`;
-- `total_orig_bytes`;
-- `packet_count`;
-- `dynamic_threshold`;
-- Wazuh rule ID and level.
-
-## What the evidence demonstrates
-
-The evidence should show that:
-
-1. Zeek completed the baseline for the monitored host;
-2. a later outbound window exceeded the calculated threshold;
-3. the custom Zeek JSON log was generated;
-4. Wazuh matched rule `100914`;
-5. the source and destination roles were consistent with the controlled test.
-
-## Sanitization
-
-Replace real or unnecessary values with documented placeholders where required.
-
-Do not commit:
-
-- the transferred file;
-- confidential or personal data;
-- complete Zeek logs;
-- complete Wazuh alert archives;
-- PCAP files containing unrelated traffic;
-- credentials or tokens;
-- public service identifiers that are not needed to explain the result.
-
-Each evidence file should be accompanied by enough context to explain the test date, the authorized source and destination roles, and what the selected fields prove.
+Do not commit `results/` wholesale, raw `data_exfiltration.log`, `alerts.json`, PCAP, test payloads, passwords or SSH keys. Rule `111946` matches same source across three Slow candidates; the three distinct destination IPs in T10 were guaranteed by the test input, not by an additional destination-uniqueness constraint in the XML rule.

@@ -1,0 +1,85 @@
+<group name="zeek_custom,data_exfiltration,">
+
+  <!-- Parent selector: consolidated Data Exfiltration events. -->
+  <rule id="111940" level="0">
+    <if_sid>100900</if_sid>
+    <location type="pcre2">data_exfiltration\.log$</location>
+    <field name="event_type" type="pcre2">^exfil_(adaptive_decision|slow_window_decision)$</field>
+    <description>Zeek Data Exfiltration events</description>
+  </rule>
+
+  <!-- Adaptive: candidate for an individual destination. -->
+  <rule id="111941" level="8">
+    <if_sid>111940</if_sid>
+    <field name="event_type" type="pcre2">^exfil_adaptive_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="adaptive_candidate" type="pcre2">^true$</field>
+    <description>Zeek Adaptive Exfil: $(src_ip) to $(dest_ip), bytes=$(sample_bytes), threshold=$(threshold_bytes), reason=$(reason)</description>
+    <group>exfil_adaptive,exfil_destination,</group>
+  </rule>
+
+  <!-- Adaptive: host aggregate and attribution to the leading destination. -->
+  <rule id="111942" level="5">
+    <if_sid>111940</if_sid>
+    <field name="event_type" type="pcre2">^exfil_adaptive_decision$</field>
+    <field name="scope" type="pcre2">^host$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="adaptive_candidate" type="pcre2">^true$</field>
+    <description>Zeek Adaptive Exfil host aggregate: $(src_ip), bytes=$(sample_bytes), threshold=$(threshold_bytes), principal_dest=$(principal_dest_ip), principal_share=$(principal_dest_share_percent)%, reason=$(reason)</description>
+    <group>exfil_adaptive,exfil_host_aggregate,</group>
+  </rule>
+
+  <!-- Slow: candidate for an individual destination. -->
+  <rule id="111943" level="9">
+    <if_sid>111940</if_sid>
+    <field name="event_type" type="pcre2">^exfil_slow_window_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="slow_candidate" type="pcre2">^true$</field>
+    <description>Zeek Slow Exfil: $(src_ip) to $(dest_ip), rolling_bytes=$(rolling_payload_bytes), threshold=$(rolling_threshold_bytes), reason=$(reason)</description>
+    <group>exfil_slow,exfil_destination,</group>
+  </rule>
+
+  <!-- Slow: host aggregate with the leading destination in the current window. -->
+  <rule id="111944" level="5">
+    <if_sid>111940</if_sid>
+    <field name="event_type" type="pcre2">^exfil_slow_window_decision$</field>
+    <field name="scope" type="pcre2">^host$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="slow_candidate" type="pcre2">^true$</field>
+    <description>Zeek Slow Exfil host aggregate: $(src_ip), rolling_bytes=$(rolling_payload_bytes), threshold=$(rolling_threshold_bytes), current_window_top_dest=$(current_window_top_dest_ip), current_window_top_share=$(current_window_top_dest_share_percent)%, reason=$(reason)</description>
+    <group>exfil_slow,exfil_host_aggregate,</group>
+  </rule>
+
+  <!-- At least two destination-scoped Adaptive candidates for the same source
+       within 10 minutes. Host-aggregate views are excluded to avoid counting
+       one Zeek observation as two independent detection episodes. -->
+  <rule id="111945" level="10" frequency="2" timeframe="600">
+    <if_matched_sid>111941</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <location type="pcre2">data_exfiltration\.log$</location>
+    <field name="event_type" type="pcre2">^exfil_adaptive_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="adaptive_candidate" type="pcre2">^true$</field>
+    <description>Zeek Adaptive Exfil repeated destination candidates: host=$(src_ip), current_dest=$(dest_ip), bytes=$(sample_bytes), threshold=$(threshold_bytes), reason=$(reason)</description>
+    <group>exfil_adaptive,exfil_repeated_candidate,</group>
+  </rule>
+
+  <!-- At least three destination-scoped Slow candidates for the same source
+       within 15 minutes. Rolling windows may overlap, so this correlation
+       does NOT prove that three distinct exfiltration incidents occurred. -->
+  <rule id="111946" level="11" frequency="3" timeframe="900">
+    <if_matched_sid>111943</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <location type="pcre2">data_exfiltration\.log$</location>
+    <field name="event_type" type="pcre2">^exfil_slow_window_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="sample_eligible" type="pcre2">^true$</field>
+    <field name="slow_candidate" type="pcre2">^true$</field>
+    <description>Zeek Slow Exfil repeated rolling candidates: host=$(src_ip), current_dest=$(dest_ip), rolling_bytes=$(rolling_payload_bytes), threshold=$(rolling_threshold_bytes), reason=$(reason)</description>
+    <group>exfil_slow,exfil_repeated_candidate,</group>
+  </rule>
+
+</group>

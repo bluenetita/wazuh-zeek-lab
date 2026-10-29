@@ -47,6 +47,10 @@ Zeek's ICMP Flood detector groups mirrored IPv4 Echo Request observations by **d
 
 See [the scenario](../scenarios/icmp-flood/README.md) and [Wazuh ruleset index](../blue-team/wazuh/rules/README.md).
 
+## Data Exfiltration observation and classification
+
+Internal-origin TCP flows to the authorized external receiver traverse the OVS mirror to ZeekVM. The current detector estimates originator payload bytes from **completed TCP connections**, groups one-minute destination/host windows, evaluates Adaptive and 10-window Slow candidates, and writes one JSON stream (`data_exfiltration.log`). Zeek Wazuh Agent applies PCRE2 candidate restrictions; native Manager XML rules `111940–111948` classify/correlate. This is network metadata analysis rather than confirmed received bytes or file-content inspection. Auditd/AppArmor on endpoints are separate data sources and are not joined into these exfiltration rules.
+
 ## Endpoint telemetry flow
 
 ```text

@@ -7,7 +7,7 @@ This directory contains the custom laboratory ruleset for network telemetry, end
 | File | Rule IDs | Purpose |
 |---|---|---|
 | `001_zeek_rules.xml` | `100900-100907` | Base JSON, DNS, rejected connections, and TLS conditions |
-| `002_zeek_rules_custom.xml` | `100909-100919` | Reverse shell, data exfiltration, and Zeek scanning base rules |
+| `002_zeek_rules_custom.xml` | `100909-100912`, `100915-100922` | Reverse shell, scanning, and SSH base rules (legacy exfiltration rules retired) |
 | `003_auditd_rev_shell.xml` | `110900` | Successful endpoint outbound connection from enriched Auditd data |
 | `004_zeek_auditd_correlation.xml` | `120900-120926` | Reverse-shell cross-source correlation chains |
 | `005_zeek_scanning_correlation.xml` | `120927-120934` | Scanning after an earlier reverse-shell correlation |
@@ -31,7 +31,7 @@ All scanning rules add group `zeek_scanning`, which is consumed by the correlati
 
 ## ICMP Echo Flood vs ICMP reconnaissance
 
-Rule `100919` is `icmp_host_scan`: a host probing multiple destinations. It is **not** the ICMP Echo Flood detector. Rule `100940` belongs to `008_zeek_icmp_flood_rules.xml` and triggers on a Zeek JSON event with `event_type=icmp_flood_suspected` and a log location matching `icmp_flood.log`. It is level 8 and mapped to ATT&CK `T1498.001`. The event counts mirrored **observations**, not de-duplicated requests; `dest_ip` identifies the monitored victim and `source_attribution=unverified` expressly avoids claiming attacker identity.
+Rule `100919` is `icmp_host_scan`: a host probing multiple destinations. It is **not** the ICMP Echo Flood detector. Rule `100940` belongs to `008_zeek_icmp_flood_rules.xml` and triggers on a Zeek JSON event with `event_type=icmp_flood_suspected` and a log location matching `icmp_flood.log`. It is level 8 and mapped to ATT&CK `T1498.001`. The validated v1.7-rc2 configuration uses a route-specific TTL-pair heuristic to estimate distinct observations, **not** proven packet uniqueness; `dest_ip` identifies the monitored victim and `source_attribution=unverified` expressly avoids claiming attacker identity.
 
 `100940` uses the existing JSON parent `100900`; do not duplicate the parent or add an unnecessary decoder. Test location-dependent classification with:
 
@@ -71,6 +71,15 @@ High-severity examples include:
 - `130963`: persistence-related modification denial;
 - `130964`: security-monitoring modification denial;
 - `130981`: repeated executable-launch denials.
+
+## Data Exfiltration — final XML schema
+
+The retired `100913`/`100914` legacy rules have been removed from `002_zeek_rules_custom.xml`. The consolidated stream is matched by:
+
+- `097_zeek_exfil_rules.xml`: parent `111940`, Adaptive Destination/Host `111941`/`111942`, Slow Destination/Host `111943`/`111944`, repeated Adaptive `111945` (2 in 600 s), repeated Slow `111946` (3 in 900 s).
+- `098_zeek_exfil_slow_persistence_rules.xml`: internal Slow candidate continuation `111947` (`no_log`) and same-source persistence `111948` (2 in 240 s).
+
+These rules match **eligible candidates**, not every diagnostic window. They correlate repeated events by `src_ip` and should not be interpreted as evidence of a unique receiver or of confirmed transfer of sensitive data. No Python correlation service or scenario-specific active response is required. Details: [`scenarios/data-exfiltration/README.md`](../../../scenarios/data-exfiltration/README.md).
 
 ## Validation
 

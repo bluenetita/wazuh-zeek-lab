@@ -1,0 +1,6 @@
+metric	before	after	observation
+zeek_pid	1024083	1040586	changed
+wazuh_logcollector_pid	1024180	1040940	changed
+log_rotation	not_rotated_at_checkpoint	rotated	rotation_changed=1
+post_restart_adaptive_destination	NA	1	Wazuh rule 111941
+post_restart_adaptive_host	NA	1	Wazuh rule 111942

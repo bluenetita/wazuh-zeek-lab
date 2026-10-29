@@ -48,11 +48,17 @@
 - Long correlation windows increase the chance of unrelated events being combined.
 - Reverse-shell-to-scanning correlation currently uses source IP as the primary linkage; stronger host identity or process/session linkage would reduce ambiguity.
 
-## Data-exfiltration limitations
+## Data Exfiltration visibility and attribution limits
 
-- A volume anomaly can represent legitimate backups, updates, or transfers.
-- Baselines are sensitive to the learning period and workload changes.
-- Low-and-slow transfers may remain below the threshold.
+- The final module estimates **originator-to-responder TCP payload bytes on finalized connections** using sequence-derived information. It is not packet-by-packet wire-time accounting or verified receiver-side delivery; the T01–T10 tests separately checked bytes received by the authorized test sink.
+- Mirroring, incomplete TCP handshakes, capture gaps, retransmissions and first/partial windows can affect eligibility. Quality-excluded windows do not become confirmed Adaptive candidates, even when the byte estimate is high.
+- The Adaptive baseline requires delayed benign sample confirmation and is **in memory**. Its `ready` state is workload-dependent and resets on Zeek redeployment; a suspicious candidate can pause learning to avoid baseline contamination.
+- Slow detection covers a tested ten-window pattern, not every possible low-rate exfiltration strategy. Long gaps, alternative timing, mixed flows or below-threshold volumes may evade it.
+- Host aggregates can summarize several destinations. `111945` and `111946` correlate by `src_ip` and **do not enforce destination uniqueness**; `111948` may describe persisted rolling state with no new bytes in an individual continuation window.
+- Detection cannot determine the initiating process, file contents, destination ownership, intent, or whether sensitive material was actually disclosed. The separate Auditd/AppArmor telemetry is **not** correlated into these exfiltration XML rules.
+- Legitimate backups, cloud synchronization, software distribution or other bulk data transfers can resemble suspicious volumes. The ten controlled PASS results do not establish a production false-positive or false-negative rate.
+- The Zeek Agent forwards only selected candidate/continuation JSON events, while many diagnostic records remain in the local log; absence of an alert does not mean absence of a local diagnostic event.
+- No scenario-specific automated quarantine, endpoint blocking or Python correlation service is enabled.
 
 ## Response limitations
 

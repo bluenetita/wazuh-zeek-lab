@@ -42,6 +42,10 @@ For ICMP Flood v1.5, the boundary regression used the **same** PCAP for the old 
 
 Report **raw mirror observations** for historical v1.5 and **estimated distinct** counts for v1.7 separately. Neither proves physical packet uniqueness; the TTL pairing is specific to the tested path. Source IP remains unverified if spoofing is possible. Early pre-NTP cross-VM timing samples are invalid; after NTP verification, report single-run Zeek-to-Wazuh timestamp differences with uncertainty and without calling them pure network latency.
 
+## Data Exfiltration training and regression safeguards
+
+During the 28 October 2026 final migration, the detector state was reset on Zeek restart. The regression first warmed up new sources to avoid partial first windows, then trained the Adaptive Host profile with 30 *confirmed* benign samples using a 15-minute delayed learning gate. Slow candidate windows were separated from prior alerts to avoid leaking temporal correlation state across tests. T09 used before/after process IDs and a log rotation marker; its post-restart detection was verified after benign warm-up. These controls make a controlled-case PASS auditable but do not establish population-level statistical accuracy. Preserve private complete results separately from the reduced repository evidence.
+
 ## Scenario validation record
 
 Each scenario should record:

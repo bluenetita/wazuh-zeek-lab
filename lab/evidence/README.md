@@ -1,6 +1,7 @@
 # Evidence
 
 This directory contains **reduced and sanitized** evidence from results observed in the cyber range. Scenario documentation explains each test; `evidence/` retains the data required to support the result without publishing complete raw archives.
+
 ## Available evidence
 
 | Directory | Contents |
@@ -13,6 +14,11 @@ This directory contains **reduced and sanitized** evidence from results observed
 | `ssh-bruteforce/` | Zeek/Wazuh samples and multi-host test matrix |
 | `mitm/` | reduced ARP/DHCP/DNS positive-path Zeek samples and a compact result index |
 | `icmp-flood/` | v1.4/v1.5 sliding-window baseline and final v1.7-rc2 subnet/TTL-dedup validation; reduced Zeek/Wazuh `100940` records and `tcpdump` pairing evidence |
+
+## Data Exfiltration — October 2026
+
+[`data-exfiltration/`](data-exfiltration/README.md) includes a reduced 10/10 post-migration test matrix and T09 restart checkpoint. Full private traffic logs are intentionally excluded. The test results describe authorized synthetic transfers and support only controlled functional validation.
+
 ## Publication criteria
 
 The repository may include:
@@ -32,6 +38,7 @@ The repository does not include:
 - complete process dumps or journal exports;
 - private router configurations;
 - personal data or unnecessary runtime files.
+
 ## Relationship with `scenarios/`
 
 ```text

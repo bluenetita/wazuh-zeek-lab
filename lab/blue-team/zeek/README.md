@@ -17,6 +17,7 @@ VLAN 10 / 20 / 30
 ```
 
 The mirror interface used in the lab is `ens19.999`.
+
 ## Main files
 
 | File | Function |
@@ -26,8 +27,10 @@ The mirror interface used in the lab is `ens19.999`.
 | `site/custom_scripts/scanning/address_scan.zeek` | TCP address-scan detector |
 | `site/custom_scripts/ssh_bruteforce/ssh_bruteforce.zeek` | SSH detection keyed by source/destination pair |
 | `site/custom_scripts/mitm/` | ARP binding, rogue DHCP, and protected-DNS MITM indicators |
+| `site/custom_scripts/data_exfiltration/` | Active completed-flow Adaptive and Slow detection, JSON windows, baseline guard |
 | `site/custom_scripts/icmp_flood/` | IPv4 ICMP Echo Flood: module loader, subnet policy, TTL-pair deduplication and per-destination exact sliding window |
-Other scripts already present in the repository (`reverse_shell.zeek`, malware/download detection, scanning loader, logging, exfiltration, and other detectors) should be preserved.
+Preserve the unrelated existing detectors (`reverse_shell.zeek`, malware/download detection, scanning loader, and logging). The retired standalone `data_exfiltration.zeek` is the one exception: remove it after replacing this module.
+
 ## Custom logs
 
 Custom logs are written under `/var/log/zeek-custom/`. The most relevant are:
@@ -42,10 +45,12 @@ ssh_bruteforce.log
 mitm_arp.log
 mitm_dhcp.log
 mitm_dns.log
+data_exfiltration.log
 icmp_flood.log
 ```
 
 The movement detector v2 also maintains a dedicated diagnostic log for experimental verification.
+
 ## Reverse-shell movement v2
 
 The detector considers TCP connections toward destinations outside the excluded internal subnets and applies the main condition:
@@ -58,6 +63,7 @@ resp_pkts > 10
 
 The older average-packet-size values are retained only for diagnostics. The connection is reevaluated periodically and when packets are observed; each connection emits at most one movement event.
 Packet-based counters can be affected by mirror duplicates or retransmissions, so the heuristic is not equivalent to definitive reverse-shell identification.
+
 ## SSH brute force
 
 The SSH script maintains state for:
@@ -93,11 +99,19 @@ Values in the final snapshot:
 | ICMP host scan | 2 targets | 60 s |
 
 The `address_scan` threshold was restored from 2 to 20 because the test value also classified simple SSH contact with two servers as a scan. This is lab tuning, not a universal baseline.
+
+## Data Exfiltration
+
+The production lab module is loaded by `@load custom_scripts/data_exfiltration` and consists of `connection`, `window`, `adaptive`, `slow`, `config`, and `__load__` scripts. Zeek writes both candidate/diagnostic scopes to **one** `/var/log/zeek-custom/data_exfiltration.log`, which the Wazuh Agent filters before forwarding to native Wazuh rules `111940–111948`.
+
+Flow bytes are estimates from **completed TCP** connection sequence information. A first window can be partial and training quality-gated; 30 confirmed benign samples are needed before an Adaptive profile becomes `ready`. Slow uses ten rolling completed windows. Lab thresholds and validation details are documented in [`scenarios/data-exfiltration/README.md`](../../scenarios/data-exfiltration/README.md). The former `data_exfiltration.zeek` packet-based detector is no longer loaded.
+
 ## Capture quality
 
 During checks on `ens19.999`, GRO was observed as `off`, GSO as `on`, and LRO as `off [fixed]`. The repository does not include an unverified persistent unit that forces these values after reboot.
 
 `ignore_checksums=T` is present in the laboratory configuration and should be reassessed in a different deployment.
+
 ## Operational checks
 
 ```bash

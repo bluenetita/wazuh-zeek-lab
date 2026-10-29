@@ -1,351 +1,128 @@
-# Data-Exfiltration Detection
+# Data Exfiltration — adaptive and low-and-slow detection
 
-## Objective
+**Status:** validated in the isolated Proxmox cyber range on 28 October 2026 (10/10 controlled tests, after the final detector migration). **Mode:** detection only; no scenario-specific Active Response.
 
-Validate the custom Zeek behavioral detection used to identify unusually large outbound data transfers from monitored internal hosts.
+## Objective and observation model
 
-The scenario is designed to verify that:
+Detect unusual TCP outbound volumes from internal hosts to the simulated external network. Traffic from the Client Linux VMs to an authorized Kali test receiver was mirrored by Open vSwitch to Zeek, written as JSON into a single custom log, selected by the Zeek Wazuh Agent, and classified/correlated by native Wazuh XML rules.
 
-- Zeek learns a traffic baseline for each observed internal source host;
-- a dynamic threshold is calculated after the learning period;
-- outbound traffic above that threshold generates a custom Zeek event;
-- Wazuh ingests the event and produces the expected alert;
-- the result is interpreted together with destination, host role, and endpoint evidence.
+```text
+Client Linux (authorized synthetic sender)
+  -> RouterOS / pfSense -> authorized Kali receiver
+                | OVS mirror VLAN 999
+                v
+         Zeek VM (completed TCP flows)
+                |
+   /var/log/zeek-custom/data_exfiltration.log
+                |
+      Wazuh Agent (JSON + restrict)
+                |
+      Wazuh Manager (XML rules 111940–111948)
+                v
+      Alerts and temporal correlations
+```
 
-This scenario demonstrates anomaly detection. A threshold violation is an indicator that requires investigation; it is not proof that confidential data was stolen.
+The network detector estimates **originator-to-responder payload bytes from completed TCP connection sequence information**. These figures are not the same as confirmed receiver-side bytes, raw mirrored packet counts, application files, or proof of actual theft. Receiver-side byte counts were checked separately by the controlled test suite.
 
-## Components
+### Components and files
 
-| Component | Role |
+| Component | Versioned path |
 |---|---|
-| ClientVM | Monitored internal source host |
-| Authorized external test endpoint | Receives controlled outbound test traffic |
-| Proxmox OVS mirror | Copies relevant traffic to ZeekVM |
-| ZeekVM | Measures outbound TCP payload volume and writes the custom log |
-| Wazuh Agent on ZeekVM | Forwards the custom JSON log |
-| Wazuh Manager | Applies rules `100913` and `100914` |
+| Zeek loader/configuration | `blue-team/zeek/site/local.zeek` and `site/custom_scripts/data_exfiltration/` |
+| Wazuh Zeek agent | `blue-team/wazuh/agent-configs/zeek-agent-ossec.conf` |
+| Wazuh XML base and correlation | `blue-team/wazuh/rules/002_zeek_rules_custom.xml`, `097_zeek_exfil_rules.xml`, `098_zeek_exfil_slow_persistence_rules.xml` |
+| Reduced results | `evidence/data-exfiltration/post-migration-validation-2026-10.tsv` |
+| Detailed results and reproducibility | `docs/data-exfiltration-validation-2026-10.md` |
 
-## Related files
+All paths in the table are relative to the repository root.
 
-```text
-blue-team/zeek/site/custom_scripts/data_exfiltration/data_exfiltration.zeek
-blue-team/wazuh/rules/002_zeek_rules_custom.xml
-blue-team/wazuh/agent-configs/zeek-agent-ossec.conf
-blue-team/wazuh/integrations/zeek-custom-logs.md
-evidence/data-exfiltration/
-```
+## Detection logic
 
-## Detection model
+### Completed-flow data and windows
 
-The script analyzes TCP payload sent from an internal source to a destination outside the configured internal subnets.
+The `DataExfilFlow` module accepts relevant outbound TCP flows from the configured internal networks (`10.3.10.0/24`, `10.3.20.0/24`, `10.3.30.0/24`). `DataExfilWindow` maintains a **60-second window** and differentiates destination and host aggregation. Quality checks (e.g., incomplete first window, capture gaps, non-finalized/unsuitable connections) prevent ineligible windows from producing Adaptive candidates. A destination and the host can each generate a decision: do not treat them as two distinct exfiltration events.
 
-The current laboratory configuration treats the following networks as internal:
+The first observed window for a new source can be intentionally marked `first_window_partial=true`, producing `window_not_eligible`. A benign warm-up and a completed window were needed to fairly test the second client in T07.
 
-```text
-10.3.10.0/24
-10.3.20.0/24
-10.3.30.0/24
-```
+### Adaptive: single large transfer
 
-Traffic is counted only when:
+- When there is no established baseline, the starting candidate threshold is **4 MiB**.
+- A ready baseline requires **30 confirmed eligible benign samples** per profile; the history is bounded to 60 entries.
+- Delayed learning confirmation is **15 minutes**; suspicious candidates suspend learning for **10 minutes**. Training samples are capped at 2 MiB.
+- The configured minimum ready-state candidate threshold is **1 MiB**, but the computed threshold may be higher depending on the learned median and 90th percentile.
+- The validated T08 Host baseline became `ready` after 43 controlled 256-KiB transfers, with 30 confirmed samples and a threshold of 1,048,576 bytes.
 
-- the packet is sent by the connection originator;
-- the TCP packet contains payload;
-- the source belongs to one of the internal networks;
-- the destination does not belong to an internal network.
+The decision event is `exfil_adaptive_decision` with `scope=destination` or `scope=host`, `adaptive_candidate`, `sample_bytes`, `threshold_bytes`, `sample_eligible`, `profile_state`, and an explanatory `reason`.
 
-Internal-to-internal traffic, response-direction traffic, and packets without payload are not included in the calculated outbound total.
+### Slow: repeated smaller transfers
 
-## Baseline configuration
+A candidate is based on **ten completed one-minute rolling windows**, with at least **eight active windows**, a rolling volume of **at least 4 MiB**, and a per-window ceiling **below 1 MiB**. The implementation also checks inter-window continuity and time-span constraints; see the actual `slow.zeek` source for all criteria.
 
-The current test-oriented values are:
+The decision event is `exfil_slow_window_decision`, with `slow_candidate`, `candidate_active`, `rolling_active_windows`, `rolling_payload_bytes`, `rolling_threshold_bytes`, `reason`, and scope fields. A continuation can describe a still-active rolling candidate **without new bytes** in the current window. Wazuh therefore distinguishes candidate detection from persistence of its state.
 
-| Parameter | Value | Purpose |
-|---|---:|---|
-| Calculation window | 1 minute | Aggregates outbound payload for each source host |
-| Baseline duration | 5 minutes | Minimum learning period before detection |
-| Minimum baseline windows | 5 | Requires multiple non-empty observations |
-| Standard-deviation factor | 3.0 | Builds the statistical threshold |
-| Maximum safety factor | 1.2 | Ensures the threshold is above the largest baseline window |
+### Wazuh classification and correlation (native XML)
 
-The dynamic threshold is calculated as:
+| Rule | Meaning | Level |
+|---|---|---:|
+| `111940` | Parent selector for the consolidated Zeek event stream | 0 |
+| `111941` | Adaptive: destination candidate | 8 |
+| `111942` | Adaptive: host aggregate candidate | 5 |
+| `111943` | Slow: destination candidate | 9 |
+| `111944` | Slow: host aggregate candidate | 5 |
+| `111945` | Repeated Adaptive destination candidates, same `src_ip`, 2 within 600 s | 10 |
+| `111946` | Repeated Slow destination candidates, same `src_ip`, 3 within 900 s | 11 |
+| `111947` | Internal suppressed Slow continuation; `no_log`, used for correlation | 1 |
+| `111948` | Two Slow continuation events for the same `src_ip` within 240 s | 9 |
 
-```text
-dynamic_threshold = max(
-    baseline_mean + 3.0 * baseline_standard_deviation,
-    baseline_maximum * 1.2
-)
-```
+`111945` and `111946` correlate by **source IP**, not necessarily the same destination; `111946` does not itself enforce three distinct destination IPs, although T10 tested precisely that traffic pattern. `111948` reports persistence of candidate state, not independently confirmed new exfiltration; the destination in its alert is the **latest** observed destination, not a per-destination correlation key.
 
-The state is maintained in Zeek memory. Restarting or redeploying Zeek resets the learned baseline.
+The Wazuh Agent forwards candidate decisions and selected destination continuation events using its JSON `<localfile>` and PCRE2 restrictions. Regular Zeek diagnostics are retained locally but not all forwarded to the manager. This scenario deliberately does **not** introduce a Python correlator or enable RouterOS quarantine.
 
-## Collected metrics
+## Validation, 28 October 2026
 
-For each monitored source host and calculation window, the custom log can include:
+| Test | Validation | Result |
+|---|---|---|
+| T01 | 5-MiB burst; Adaptive Destination and Host | PASS |
+| T02 | Repeated Adaptive candidate; `111945` | PASS |
+| T03 | Twelve 450-KiB transfers; Slow Destination/Host; two continuation states and `111948` | PASS |
+| T04 | Controlled Slow candidate closure | PASS |
+| T05 | Benign 100-KiB transfer, no Wazuh alert | PASS |
+| T06 | 3 + 3 MiB toward two receivers, Host aggregate detected | PASS |
+| T07 | Independent source hosts A/B; no accidental cross-source `111945` correlation; B-B positive | PASS |
+| T08 | Host baseline ready after 30 confirmed samples, 256 KiB negative / 5 MiB positive, `111942` | PASS |
+| T09 | Log rotation + Zeek and agent restarts; detection recovered after benign warm-up | PASS |
+| T10 | Three distinct receiver IPs, fresh Slow candidates; `111946` | PASS |
 
-| Field | Meaning |
-|---|---|
-| `event_type` | `baseline_completed` or `possible_data_exfiltration` |
-| `src_ip` | Monitored internal source |
-| `dest_ip` | Main destination for the current window |
-| `dest_port` | Port of the main destination |
-| `dest_proto` | Transport protocol associated with the destination port |
-| `top_dest_bytes` | Bytes sent to the main destination |
-| `total_orig_bytes` | Total outbound TCP payload bytes in the window |
-| `packet_count` | Number of counted payload-bearing packets |
-| `avg_payload_bytes` | Average counted payload length |
-| `max_payload_bytes` | Largest counted payload length |
-| `baseline_avg_bytes` | Mean outbound bytes during learning |
-| `baseline_stddev_bytes` | Baseline standard deviation |
-| `baseline_max_bytes` | Largest baseline window |
-| `dynamic_threshold` | Calculated detection threshold |
-| `window_interval` | Aggregation interval |
-| `note` | Human-readable event context |
+These are **functional controlled-case passes**, not measurements of false-positive/false-negative rates across natural workloads, and not an estimated sensitivity of a production detector. The test runner uses authorized synthetic traffic only. Earlier pre-migration results are kept separately and must not be mixed with this report.
 
-The `dest_ip`, `dest_port`, and `top_dest_bytes` fields identify the destination that received the most bytes during the window. They do not prove that it was the only destination contacted.
+## Operational verification
 
-## Custom Zeek log
-
-The script writes JSON records to:
-
-```text
-/var/log/zeek-custom/data_exfiltration.log
-```
-
-Two event types are relevant.
-
-### Baseline completion
-
-```text
-event_type = baseline_completed
-```
-
-This event indicates that the script collected enough baseline windows and calculated the dynamic threshold.
-
-For this event, destination fields are deliberately reset because baseline completion does not represent a suspicious connection to a specific destination.
-
-### Possible data exfiltration
-
-```text
-event_type = possible_data_exfiltration
-```
-
-This event is generated when:
-
-```text
-total_orig_bytes >= dynamic_threshold
-```
-
-It records the total outbound volume and the main destination observed during that window.
-
-## Wazuh rules
-
-The custom events are processed by:
-
-```text
-blue-team/wazuh/rules/002_zeek_rules_custom.xml
-```
-
-| Rule ID | Level | Event | Meaning |
-|---:|---:|---|---|
-| `100913` | 3 | `baseline_completed` | Baseline and dynamic threshold are ready |
-| `100914` | 8 | `possible_data_exfiltration` | Outbound bytes exceeded the dynamic threshold |
-
-Rule `100913` is operational information. Rule `100914` is a suspicious behavioral alert that requires contextual validation.
-
-The current ruleset does not correlate the data-exfiltration alert with Auditd file reads, FIM events, process telemetry, or an automated containment action.
-
-## Controlled validation procedure
-
-### 1. Verify the script is loaded
-
-On ZeekVM:
+On ZeekVM, verify script compilation and collector configuration:
 
 ```bash
 sudo /opt/zeek/bin/zeekctl check
-sudo /opt/zeek/bin/zeekctl deploy
+sudo /opt/zeek/bin/zeekctl status
+sudo /var/ossec/bin/wazuh-logcollector -t
+sudo tail -n 10 /var/log/zeek-custom/data_exfiltration.log
 ```
 
-Confirm that the custom script is loaded through the site configuration.
-
-### 2. Observe the custom log
+On Wazuh Manager, validate the XML rules:
 
 ```bash
-sudo tail -f /var/log/zeek-custom/data_exfiltration.log
+sudo /var/ossec/bin/wazuh-analysisd -t
 ```
 
-### 3. Generate representative baseline traffic
+`zeekctl deploy`/restart resets in-memory Adaptive and Slow state; subsequent tests must warm up the first window. The custom Zeek log is rotated with the shared `/etc/logrotate.d/zeek-custom` policy (using `copytruncate` in the validated lab). The agent monitors only future events for this stream.
 
-From ClientVM, generate ordinary authorized outbound activity for at least five minutes.
+## Scope and limitations
 
-The learning traffic should:
+- Inferred TCP outbound bytes from **finalized connections**, not confirmed loss of confidential information, and not direct observation of process/file activity.
+- No UDP exfiltration detector, data-content inspection, or payload/decryption feature is claimed.
+- Potential false positives include authorized backups, software distribution, and cloud sync; training represents only the lab traffic and must be recalibrated for other environments.
+- Host-level aggregation and rolling windows can merge evidence across different destinations; review source, destination, time, and `reason` together.
+- The separate Auditd/AppArmor endpoint sources present in this repository are **not** used by these exfiltration-specific Wazuh XML correlations. No automated containment is triggered by this scenario.
+- Full raw logs, test payloads, snapshots and credentials are deliberately excluded from public version control.
 
-- be representative of the host's normal behavior;
-- produce payload-bearing TCP traffic in at least five one-minute windows;
-- avoid an unusually large transfer during baseline creation;
-- traverse the mirrored path observed by ZeekVM.
+## Release notes
 
-### 4. Confirm baseline completion
-
-Expected Zeek event:
-
-```text
-baseline_completed
-```
-
-Expected Wazuh rule:
-
-```text
-100913
-```
-
-Record the calculated values:
-
-- `baseline_avg_bytes`;
-- `baseline_stddev_bytes`;
-- `baseline_max_bytes`;
-- `dynamic_threshold`.
-
-### 5. Generate a controlled high-volume transfer
-
-Send a benign test file or generated test data from ClientVM to an authorized external laboratory endpoint.
-
-The transfer should be large enough that the outbound TCP payload observed in one calculation window exceeds the learned threshold.
-
-Do not use real confidential information. Do not send data to an unauthorized external service.
-
-### 6. Confirm the alert
-
-Expected Zeek event:
-
-```text
-possible_data_exfiltration
-```
-
-Expected Wazuh rule:
-
-```text
-100914
-```
-
-Verify that the event contains:
-
-- the correct `src_ip`;
-- the expected main destination and port;
-- `total_orig_bytes` above `dynamic_threshold`;
-- a plausible packet count and payload statistics.
-
-### 7. Validate Wazuh ingestion
-
-On the Wazuh Manager, review the alert stream or use the dashboard to confirm that rule `100914` was generated from the Zeek agent.
-
-The source log path must match:
-
-```text
-/var/log/zeek-custom/data_exfiltration.log
-```
-
-## Expected flow
-
-```text
-Normal outbound traffic
-        |
-        v
-Five or more baseline windows
-        |
-        v
-Dynamic threshold calculated
-        |
-        +--> Zeek baseline_completed
-        +--> Wazuh rule 100913
-        |
-        v
-Controlled high-volume outbound transfer
-        |
-        v
-Window total exceeds threshold
-        |
-        +--> Zeek possible_data_exfiltration
-        +--> Wazuh rule 100914
-```
-
-## Evidence to preserve
-
-A reduced evidence set should include:
-
-- one sanitized `baseline_completed` JSON record;
-- one sanitized `possible_data_exfiltration` JSON record;
-- the matching Wazuh alert for rule `100913`;
-- the matching Wazuh alert for rule `100914`;
-- the source and destination roles;
-- the test timestamp;
-- the calculated threshold and observed window total;
-- a short explanation of why the test traffic was authorized.
-
-Store publication-safe artifacts under:
-
-```text
-evidence/data-exfiltration/
-```
-
-Do not publish the transferred test file, complete PCAPs, full logs, credentials, or unrelated traffic.
-
-## Result interpretation
-
-A `possible_data_exfiltration` alert means that the monitored source produced more outbound TCP payload than expected from its learned baseline.
-
-Investigation should consider:
-
-- whether the destination is approved;
-- whether the host normally performs backups or software distribution;
-- whether the transfer was user initiated;
-- which process created the connection;
-- whether sensitive files were accessed immediately before the transfer;
-- whether FIM or Auditd recorded related file activity;
-- whether the traffic pattern was a single burst or repeated over time.
-
-## False positives
-
-Potential legitimate causes include:
-
-- backups;
-- package or image uploads;
-- cloud synchronization;
-- large software updates sent by an internal service;
-- administrative file transfers;
-- workload changes after the baseline was created;
-- an unrepresentative or excessively quiet learning period.
-
-## Limitations
-
-- The detector measures TCP payload volume, not semantic file content.
-- The measured byte total is not guaranteed to equal the original file size.
-- Encrypted traffic remains encrypted; the detector relies on metadata and volume.
-- UDP transfers are not counted by the current `tcp_packet` implementation.
-- Low-and-slow exfiltration may remain below the threshold.
-- A short test baseline may not represent normal long-term behavior.
-- Restarting Zeek clears the in-memory baseline.
-- The main destination field represents the largest destination in the window, not necessarily the only one.
-- The current Wazuh rule does not automatically identify the responsible endpoint process.
-- The current repository does not attach an Active Response to rule `100914`.
-
-## Cleanup
-
-After the controlled test:
-
-- stop the generated traffic;
-- remove temporary test data from both endpoints;
-- retain only sanitized evidence;
-- verify that no real sensitive data was used;
-- restore the intended baseline state if the test traffic distorted it;
-- restart or redeploy Zeek only when intentionally resetting the learned baseline.
-
-## Future improvements
-
-- Correlate rule `100914` with Auditd file-read events from sensitive directories.
-- Add process and socket attribution through endpoint telemetry.
-- Add destination reputation and allowlist context.
-- Persist or periodically rebuild baselines safely.
-- Support separate baselines by protocol, destination class, or time of day.
-- Detect repeated low-volume transfers across multiple windows.
-- Add a high-confidence correlation rule before enabling automatic containment.
+The [October 2026 final publication notes](../../docs/data-exfiltration-release-notes-2026-10.md) describe the active file set and why the legacy packet-based source should be removed from the repository.

@@ -131,4 +131,4 @@ redef ignore_checksums=T;
 @load custom_scripts/reverse_shell/malware_download.zeek
 
 # Data Exfiltration
-@load custom_scripts/data_exfiltration/data_exfiltration.zeek
+@load custom_scripts/data_exfiltration

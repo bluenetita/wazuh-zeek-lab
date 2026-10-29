@@ -77,9 +77,47 @@ sudo /var/ossec/bin/wazuh-analysisd -t
 sudo /var/ossec/bin/wazuh-logtest
 ```
 
-## Data-exfiltration baseline does not complete
+## Data Exfiltration: baseline remains in `training`
 
-Confirm that representative payload-bearing outbound TCP traffic is visible for the required learning windows. A Zeek restart/redeploy resets an in-memory baseline.
+The final detector learns from **eligible, benign, completed-TCP-flow windows**, rather than from a fixed five-minute packet counter. An Adaptive profile needs **30 confirmed samples**; candidate samples are held for **15 minutes** before promotion and a candidate can suspend learning temporarily. A profile can therefore remain in `training` during apparently successful transfers.
+
+On ZeekVM, examine local JSON diagnostics (only selected candidate events are forwarded to Wazuh):
+
+```bash
+sudo sed '$d' /var/log/zeek-custom/data_exfiltration.log | jq -c '
+  select(.event_type == "exfil_adaptive_decision" and .scope == "host")
+  | {ts,src_ip,profile_state,profile_samples_before,baseline_pending_count,sample_bytes,sample_eligible,adaptive_candidate,reason}
+' | tail -n 15
+```
+
+For `quality_excluded` or `window_not_eligible`, also inspect the matching `exfil_window_summary` and `exfil_destination_window` records. `first_window_partial=true` on a newly observed source is expected: perform a small authorized warm-up, allow a window to close, and confirm an eligible subsequent window. If `capture_gap_flows`, `non_sf_flows` or `missing_outbound_byte_estimates` are nonzero, investigate the mirror/capture and TCP completion before trusting the measurement. Do **not** bypass quality gates to force an alert.
+
+A Zeek restart/deploy resets in-memory training and Slow rolling state. Historical T08 evidence is from before the T09 restart; a new `ready` state must be learned afresh after restart.
+
+## Data Exfiltration: no Wazuh alert despite a local Zeek event
+
+Check the complete pipeline before changing thresholds:
+
+1. Verify Zeek has logged an **eligible candidate**, not merely a diagnostic window or a large but quality-excluded sample.
+2. Confirm the ZeekVM agent has exactly one JSON `<localfile>` for `/var/log/zeek-custom/data_exfiltration.log`, with PCRE2 restrictions on `exfil_adaptive_decision` and `exfil_slow_window_decision`.
+3. Confirm the file is readable by the agent (`zeek:wazuh`, mode `0640` in the validated VM) and that log collection starts successfully.
+4. Check Manager rules `111940–111948` with `wazuh-analysisd -t`; source-specific correlation requires matching `src_ip` and appropriate event order/timeframes.
+
+```bash
+
+# On ZeekVM
+
+sudo /opt/zeek/bin/zeekctl check
+sudo /var/ossec/bin/wazuh-logcollector -t
+sudo grep -n -C 4 'data_exfiltration.log' /var/ossec/etc/ossec.conf
+sudo tail -n 80 /var/ossec/logs/ossec.log
+
+# On Wazuh Manager
+
+sudo /var/ossec/bin/wazuh-analysisd -t
+```
+
+For `111945`, two eligible **destination** Adaptive candidates from the same source must occur in the correlation period. For `111946`, the XML counts three same-source Slow destination candidates but does not itself require distinct destinations. `111948` correlates persistent Slow *candidate state*, not necessarily new outbound bytes. Do not use these rules as proof that sensitive data was stolen.
 
 ## Active Response does not execute
 

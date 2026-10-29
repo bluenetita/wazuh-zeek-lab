@@ -1,0 +1,42 @@
+<group name="zeek_custom,data_exfiltration,">
+
+  <!--
+    Continuation of an already active Slow candidate for one DESTINATION.
+    This does not prove that any new bytes were transferred during the
+    current window: candidate_active may reflect the stored rolling state.
+    Level 1 with no_log supports if_matched_sid without emitting an alert for
+    each window. Do not use a level-0 rule as the correlation predecessor.
+  -->
+  <rule id="111947" level="1">
+    <if_sid>111940</if_sid>
+    <field name="event_type" type="pcre2">^exfil_slow_window_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="candidate_active" type="pcre2">^true$</field>
+    <field name="slow_candidate" type="pcre2">^false$</field>
+    <field name="reason" type="pcre2">^candidate_continues_suppressed$</field>
+    <description>Zeek Slow Exfil internal candidate continuation: host=$(src_ip), dest=$(dest_ip)</description>
+    <options>no_log</options>
+    <group>exfil_slow,exfil_continuation_internal,</group>
+  </rule>
+
+  <!--
+    Two continuation events for the same source within 240 seconds.
+    This correlation is HOST-SCOPED: same_field src_ip does NOT require an
+    identical dest_ip. latest_dest is the destination of the latest event,
+    not a unique destination determined across the correlated history.
+    These continuation windows do not prove additional exfiltration bytes.
+  -->
+  <rule id="111948" level="9" frequency="2" timeframe="240">
+    <if_matched_sid>111947</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <location type="pcre2">data_exfiltration\.log$</location>
+    <field name="event_type" type="pcre2">^exfil_slow_window_decision$</field>
+    <field name="scope" type="pcre2">^destination$</field>
+    <field name="candidate_active" type="pcre2">^true$</field>
+    <field name="slow_candidate" type="pcre2">^false$</field>
+    <field name="reason" type="pcre2">^candidate_continues_suppressed$</field>
+    <description>Zeek Slow Exfil persistent candidate state for host=$(src_ip), latest_dest=$(dest_ip), rolling_bytes=$(rolling_payload_bytes), reason=$(reason)</description>
+    <group>exfil_slow,exfil_persistent_candidate,exfil_host_correlation,</group>
+  </rule>
+
+</group>

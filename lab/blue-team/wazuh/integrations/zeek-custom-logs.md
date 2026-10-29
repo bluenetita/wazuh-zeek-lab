@@ -18,6 +18,10 @@ mitm_dns.log
 icmp_flood.log
 ```
 
+## Data Exfiltration collector
+
+The active path is `/var/log/zeek-custom/data_exfiltration.log` on ZeekVM. The Wazuh Agent reads JSON with `only-future-events=yes` and forwards only Adaptive/Slow candidate decisions plus qualifying destination continuation states. Manager XML rules `111940–111948` classify and correlate the events. The former packet-based rules `100913/100914` and any experimental `shadow` stream are **not part of the active configuration**. No automatic containment is enabled by this scenario.
+
 ## Processing flow
 
 ```text
@@ -36,6 +40,6 @@ sudo /var/ossec/bin/wazuh-logtest -l /var/log/zeek-custom/icmp_flood.log
 
 Do not replace the dedicated inputs with a broad overlapping `*.log` collection. Do not forward the optional `icmp_flood_metrics.log` diagnostic stream as an alert feed by default. See the [scenario](../../../scenarios/icmp-flood/README.md) and [agent reference](../agent-configs/README.md).
 
-The detector reports sensor observations, not unique ICMP requests. OVS mirroring may duplicate a routed packet, and a source address in an ICMP header can be spoofed; attribution stays unverified.
+The detector reports estimated distinct sensor observations in the validated v1.7-rc2 path; this is not a guarantee of unique physical ICMP requests. OVS mirroring may duplicate a routed packet, and a source address in an ICMP header can be spoofed; attribution stays unverified.
 
 The Microsoft Teams/Power Automate notification integration is separate from this log-ingestion path. Real webhook URLs must never be committed.

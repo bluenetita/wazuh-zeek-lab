@@ -1,10 +1,12 @@
 # Setup Guide
+
 ## Recommended order
+
 1. Deploy Proxmox bridges and VLANs.
 2. Configure pfSense/RouterOS routing and firewall policy.
 3. Configure the OVS mirror and VLAN 999 capture path.
 4. Install/configure ZeekVM and verify mirrored traffic.
-5. Deploy the custom reverse-shell, data-exfiltration, scanning, and MITM scripts.
+5. Deploy the custom reverse-shell, scanning and MITM detectors plus the consolidated `custom_scripts/data_exfiltration/` Zeek module (not the legacy single-file script).
 6. Install Wazuh agents on ZeekVM, ClientVM, and ServerDB.
 7. Install Auditd rules on ClientVM.
 8. Install the ServerDB AppArmor profile in complain mode for initial observation.
@@ -12,6 +14,7 @@
 10. Validate individual events before testing correlations.
 11. Validate AppArmor enforce mode only after required service behavior is understood.
 12. Run controlled scenarios and retain only sanitized evidence in Git.
+
 ## Zeek scanning package
 
 Copy the scanning package to the Zeek site directory so the structure is equivalent to:
@@ -74,6 +77,7 @@ The ARP detector depends on link-layer visibility and a valid IP/MAC baseline. A
 The ZeekVM agent must collect `/var/log/zeek-custom/scanning.log` plus `mitm_arp.log`, `mitm_dhcp.log`, and `mitm_dns.log` as JSON. The ServerDB agent must collect `/var/log/audit/audit.log` using the Audit log format.
 
 After updating an agent configuration, restart the corresponding Wazuh Agent and verify `/var/ossec/logs/ossec.log`.
+
 ## AppArmor on ServerDB
 
 Install the profile at:
@@ -95,6 +99,7 @@ sudo aa-status
 ```
 
 Use complain mode while observing required service behavior, then test enforce mode in the isolated lab. Do not assume that commented `deny` examples are active policy.
+
 ## Wazuh Manager
 
 Copy the custom decoder/rule files into the manager's configured custom directories, normally:
@@ -112,6 +117,7 @@ sudo /var/ossec/bin/wazuh-logtest
 ```
 
 The existing manager configuration already loads `etc/decoders` and `etc/rules`, so the scanning/AppArmor/MITM additions do not require a new manager `<rule_dir>` or `<decoder_dir>` entry.
+
 ## Validation order
 
 Validate the new functionality in this order:
@@ -149,3 +155,15 @@ The operational ICMP detector is the **module** in `blue-team/zeek/site/custom_s
 Do **not** overwrite the live `local.zeek` wholesale; retain all unrelated `@load` entries, replace only the old direct ICMP script load. Validate `zeekctl check` before any planned deployment. The module should not be used with `enforce` on a new network path without verifying mirror packet ordering and false dedup candidates.
 
 See [`../scenarios/icmp-flood/README.md`](../scenarios/icmp-flood/README.md) for functional validation and [`../blue-team/zeek/site/custom_scripts/icmp_flood/README.md`](../blue-team/zeek/site/custom_scripts/icmp_flood/README.md) for the test harness. The threshold is still experimental. NTP synchronization was verified on both ZeekVM and WazuhVM by 2026-10-16; later end-to-end timestamp differences are individual multi-stage observations, not a standalone network-latency benchmark.
+
+## Data Exfiltration: finalized detection-only deployment (October 2026)
+
+The active site loader uses only `@load custom_scripts/data_exfiltration` for this scenario. That directory must contain `__load__.zeek`, `connection.zeek`, `window.zeek`, `adaptive.zeek`, `slow.zeek` and `config.zeek`. Remove the retired `data_exfiltration.zeek` script and any experimental `*_shadow.zeek` files from the published active package. Preserve every unrelated custom detector.
+
+1. On ZeekVM, verify `zeekctl check`, then deploy only in a maintenance window. Completed TCP flows contribute estimated outbound volume to one-minute host/destination windows. The single JSON log is `/var/log/zeek-custom/data_exfiltration.log`.
+2. The ZeekVM Wazuh Agent has **one** JSON `<localfile>` for this path with `only-future-events=yes` and the candidate/continuation PCRE2 restrictions. Do not add a second overlapping collector or an experimental `shadow` path.
+3. The Wazuh Manager uses `097_zeek_exfil_rules.xml` (rules `111940–111946`) and `098_zeek_exfil_slow_persistence_rules.xml` (`111947–111948`). The obsolete `100913` and `100914` entries are removed from `002_zeek_rules_custom.xml` without altering reverse-shell/scanning/SSH rules.
+4. Validate configurations with `zeekctl check`, `wazuh-logcollector -t` and `wazuh-analysisd -t` on the respective hosts before enabling the pipeline. The versioned files are **reference copies**: do not overwrite the already validated live VMs merely to publish this repository update.
+5. After a Zeek deploy/restart, allow a benign warm-up window; the Adaptive baseline and Slow state restart in memory. Run controlled regression cases without mixing pre-migration rule history and post-migration evidence.
+
+The scenario is **detection only**: neither Python cross-event correlation nor RouterOS Active Response is configured. See the [Data Exfiltration scenario](../scenarios/data-exfiltration/README.md), [Zeek module](../blue-team/zeek/site/custom_scripts/data_exfiltration/README.md), [Manager rule index](../blue-team/wazuh/rules/README.md), and [validation report](data-exfiltration-validation-2026-10.md).

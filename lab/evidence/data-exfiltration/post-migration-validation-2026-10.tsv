@@ -1,0 +1,11 @@
+test	status	scope	observed_evidence
+T01	PASS	Adaptive destination and host	5 MiB received by authorized receiver; candidate Destination and Host
+T02	PASS	Adaptive temporal correlation	Second 5-MiB transfer; Wazuh 111945 observed
+T03	PASS	Slow destination, host and persistence	12 x 450 KiB; 2 Destination continuations; one 111948 alert; 10 max active windows
+T04	PASS	Slow candidate termination	Destination candidate closed by Zeek after inactivity
+T05	PASS	Benign control	100 KiB received; eligible window; no Wazuh alert
+T06	PASS	Host aggregation across destinations	3+3 MiB received across 2 IPs; Host aggregate identified
+T07	PASS	Source isolation	Two independent clients; B-B positive 111945 after warm-up; no A/B cross-source correlation
+T08	PASS	Adaptive ready baseline	43 x 256 KiB training; 30 confirmed; ready threshold 1048576; 256 KiB negative, 5 MiB positive 111942
+T09	PASS	Rotation and service restart	rotation_changed=1; both PIDs changed; warm-up then Zeek Destination/Host and Wazuh 111941/111942
+T10	PASS	Slow source-based correlation	3 distinct destination IPs; each candidate seen in Zeek/Wazuh; one 111946 alert
