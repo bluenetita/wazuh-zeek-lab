@@ -1,0 +1,7 @@
+trial,scenario,intent,planned_transfers,confirmed_sent,confirmed_received,zeek_conn,adaptive_destination,slow_destination,wazuh_111941,wazuh_111942,wazuh_111943,wazuh_111944,wazuh_111948_raw,wazuh_111948_original_distinct_ids,wazuh_111948_distinct_basis,quality,limitations
+P01,Quiet,authorized,0,0,0,0,0,0,0,0,0,0,0,,Not independently audited by original Wazuh ID,Completed,No intended target traffic; background source connections excluded
+P02,Benign small,authorized,1,1,1,1,0,0,0,0,0,0,0,,Not independently audited by original Wazuh ID,Completed,One 256 KiB synthetic HTTP transfer
+P03,Simulated slow,simulated_suspicious,18,18,18,18,0,1,0,0,1,1,6,,Not independently audited by original Wazuh ID,PASS_WITH_LIMITATIONS,180s tail event-timestamp coverage not proven (legacy extractor)
+P04,Benign slow,authorized,18,18,18,18,0,1,0,0,1,1,8,6,"Operator original ID audit, 2026-10-30/31 Wazuh archives",PASS,Rotation recovered; original Wazuh IDs confirm six distinct 111948 alerts (8 overlapping reduced rows); one authorized episode.
+P05,Benign bulk,authorized,1,1,1,1,1,0,1,1,0,0,0,,Not independently audited by original Wazuh ID,PASS_WITH_LIMITATIONS,180s tail event-timestamp coverage not proven
+P06,Simulated subthreshold,simulated_suspicious,12,12,12,12,0,0,0,0,0,0,0,,Not independently audited by original Wazuh ID,PASS_WITH_LIMITATIONS,180s tail event-timestamp coverage not proven

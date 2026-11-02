@@ -123,6 +123,12 @@ sudo /var/ossec/bin/wazuh-analysisd -t
 - The separate Auditd/AppArmor endpoint sources present in this repository are **not** used by these exfiltration-specific Wazuh XML correlations. No automated containment is triggered by this scenario.
 - Full raw logs, test payloads, snapshots and credentials are deliberately excluded from public version control.
 
+## Further experimental validation (30-31 October 2026)
+
+This README's T01-T10 series is the **28 October post-migration functional regression**, not the later live and offline evaluation. The [Adaptive Data Exfiltration Detection experimental study](../../docs/research/adaptive-data-exfiltration/README.md) reports six live trials, 35 paired offline cases, later-probe Guard OFF/ON results and explicit caveats. The six frozen Zeek modules match the historical offline experiment hash pins; no detector code changes are required to document this study.
+
+Reduced public results are indexed at [`evidence/data-exfiltration/adaptive-validation/`](../../evidence/data-exfiltration/adaptive-validation/README.md). Original raw captures, full alerts and private test harnesses remain outside public version control.
+
 ## Release notes
 
 The [October 2026 final publication notes](../../docs/data-exfiltration-release-notes-2026-10.md) describe the active file set and why the legacy packet-based source should be removed from the repository.

@@ -104,6 +104,10 @@ The completed-flow Zeek implementation produces one `data_exfiltration.log` JSON
 
 See the [scenario](scenarios/data-exfiltration/README.md), [technical validation](docs/data-exfiltration-validation-2026-10.md), and [reduced results](evidence/data-exfiltration/README.md).
 
+### Adaptive Data Exfiltration Detection: live and offline evaluation (30-31 October 2026)
+
+The subsequent [experimental evaluation](docs/research/adaptive-data-exfiltration/README.md) comprises six live trials (50/50 planned sends/receiver receipts/Zeek connections across the five nonempty workloads) and 35 paired offline Adaptive Learning Guard OFF/ON cases. Both modes flagged 25/35 initial scripted episodes; the later probe was ON-only in 20/35 pairs. The detector does not infer authorization, and these synthetic results are not production precision/recall estimates. Reduced, non-sensitive [reduced experimental tables](evidence/data-exfiltration/adaptive-validation/README.md) are available separately from the original 28 October regression.
+
 ## Repository structure
 
 ```text

@@ -11,3 +11,6 @@ This folder includes **only synthesized summaries transcribed from the actual te
 This evidence supports controlled **functional detection/correlation** only. A PASS does not establish production-wide performance, exfiltration of sensitive content, host process attribution, or real attacker identity.
 
 Do not commit `results/` wholesale, raw `data_exfiltration.log`, `alerts.json`, PCAP, test payloads, passwords or SSH keys. Rule `111946` matches same source across three Slow candidates; the three distinct destination IPs in T10 were guaranteed by the test input, not by an additional destination-uniqueness constraint in the XML rule.
+## Adaptive Data Exfiltration experimental evaluation (30-31 October 2026)
+
+The separate [experimental evidence index](adaptive-validation/README.md) contains aggregate P01-P06 live-trial outcomes, the original 35 paired offline case rows, and profile summaries. They are not part of the earlier T01-T10 validation and do not include raw capture data.
