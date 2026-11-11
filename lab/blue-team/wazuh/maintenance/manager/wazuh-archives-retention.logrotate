@@ -1,0 +1,8 @@
+/var/log/wazuh-archives-retention.log {
+    weekly
+    rotate 8
+    compress
+    missingok
+    notifempty
+    create 0640 root root
+}

@@ -1,0 +1,10 @@
+{
+  "order": 10,
+  "index_patterns": ["wazuh-alerts-4.x-*"],
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    }
+  }
+}

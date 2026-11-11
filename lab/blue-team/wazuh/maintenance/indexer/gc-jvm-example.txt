@@ -1,0 +1,5 @@
+# JVM GC rotation option observed on Wazuh Indexer 4.14.4.
+# Edit ONLY the existing Xlog:gc line in /etc/wazuh-indexer/jvm.options.
+# Restart wazuh-indexer during a maintenance window to apply.
+# This is a lab-specific example; retain enough diagnostics for production.
+9-:-Xlog:gc*,gc+age=trace,safepoint:file=/var/log/wazuh-indexer/gc.log:utctime,pid,tags:filecount=8,filesize=32m

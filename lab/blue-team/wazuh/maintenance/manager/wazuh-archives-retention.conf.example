@@ -1,0 +1,3 @@
+# Keep N UTC calendar days, including the current day.
+# LAB EXAMPLE ONLY: check contractual and regulatory retention before production.
+KEEP_DAYS=7
